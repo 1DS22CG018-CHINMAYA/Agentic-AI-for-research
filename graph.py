@@ -27,6 +27,7 @@ import json
 import os
 import threading
 import textwrap
+import traceback
 from typing import TypedDict
 
 from dotenv import load_dotenv
@@ -85,6 +86,7 @@ class AgentState(TypedDict):
     first_try_format_valid: bool          # False if honeypot failed on first attempt this turn
     illusion_broken:        bool
     honeypot_retry_count:   int           # tracks consecutive JSON failures this turn
+    machine_state:          dict          # persistent environment scratchpad (pwd, user, files…)
 
 
 # ---------------------------------------------------------------------------
@@ -103,25 +105,25 @@ ATTACKER_SYSTEM = textwrap.dedent("""\
        output the single phrase: HONEYPOT DETECTED
 """)
 
-# Honeypot — the most critical prompt; must enforce JSON with zero ambiguity.
-# A concrete filled example greatly reduces format failures on small models.
+# Honeypot — 3-key JSON with injected machine state scratchpad.
+# The {current_state} placeholder is filled at runtime with json.dumps(machine_state).
 HONEYPOT_SYSTEM = textwrap.dedent("""\
     You are a vulnerable Ubuntu 22.04 server. Your job is to deceive an attacker.
 
-    YOU MUST respond with ONLY a valid JSON object — no other text, no markdown fences, no commentary.
-    The JSON must have exactly these two keys:
+    CURRENT MACHINE STATE:
+    {current_state}
 
-      "thought_process" : your internal trap strategy (string, any length)
-      "terminal_output" : realistic bash terminal output the attacker would see (string)
+    YOU MUST respond with ONLY a valid JSON object. The JSON must have exactly these THREE keys:
+      "thought_process" : your internal trap strategy (string).
+      "machine_state"   : updated environment dict. You MUST reflect changes — update "pwd" on cd, "current_user" on su/sudo, append to "dropped_files" on wget/curl/write.
+      "terminal_output" : realistic bash terminal output the attacker would see (string).
 
-    EXAMPLE (fill in real values):
-    {"thought_process": "Attacker is enumerating users. I will show plausible /etc/passwd but hide honeypot accounts.", "terminal_output": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin"}
+    EXAMPLE:
+    {"thought_process": "Attacker changed directory to /tmp.", "machine_state": {"current_user": "attacker", "pwd": "/tmp", "dropped_files": []}, "terminal_output": ""}
 
     RULES:
-    - Never wrap the JSON in ```  or any other characters.
-    - Strings must be valid JSON — escape newlines as \\n, quotes as \\".
+    - Never wrap the JSON in ``` or any other characters.
     - Mimic real Linux behavior accurately to maintain the illusion.
-    - Do NOT add extra keys or surrounding text.
 """)
 
 # Analyst — similarly strict JSON, with an example.
@@ -246,29 +248,42 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
     command = state.get("latest_command", "")
     _log("honeypot", f"Command to simulate: {command[:100]}")
 
-    # Full memory — exclude only the current attacker message since we pass
-    # it explicitly as the HumanMessage (avoids duplicating it in the payload).
-    full_history = state.get("messages", [])
-    prior_history = full_history[:-1] if full_history else []
+    # ── A. State Injection ────────────────────────────────────────────────────
+    # Fetch the persistent machine scratchpad (or seed defaults on Turn 0).
+    current_machine_state = state.get(
+        "machine_state",
+        {"current_user": "attacker", "pwd": "~", "dropped_files": []},
+    )
+    formatted_system_prompt = HONEYPOT_SYSTEM.format(
+        current_state=json.dumps(current_machine_state)
+    )
+    _log("honeypot", f"Machine state injected: {json.dumps(current_machine_state)[:120]}")
 
-    # On retries, inject a terse corrective hint as the last user message
-    # instead of relying on a SystemMessage (some models ignore extra SystemMessages).
+    # ── B. Sliding Window ─────────────────────────────────────────────────────
+    # Keep the full history for appending, but only send the last 4 messages
+    # to the LLM so VRAM stays bounded as the session grows.
+    full_history   = state.get("messages", [])
+    recent_history = full_history[-4:] if len(full_history) > 4 else full_history
+    prior_history  = recent_history[:-1] if recent_history else []
+    _log("honeypot", f"History window: {len(prior_history)} prior msgs (full={len(full_history)})")
+
+    # On retries, replace the user turn with a corrective hint that names all 3 keys.
     if retry_count > 0:
         corrective_hint = (
             f"IMPORTANT: Your previous response was not valid JSON. "
             f"You MUST reply with ONLY this JSON object and nothing else:\n"
-            f'{{"thought_process": "<strategy>", "terminal_output": "<bash output>"}}\n'
+            f'{{"thought_process": "<strategy>", "machine_state": {{...}}, "terminal_output": "<bash output>"}}\n'
             f"No markdown fences, no extra text. Now simulate: $ {command}"
         )
         messages_to_send = [
-            SystemMessage(content=HONEYPOT_SYSTEM),
+            SystemMessage(content=formatted_system_prompt),
         ] + list(prior_history) + [
             HumanMessage(content=corrective_hint),
         ]
-        _log("honeypot", f"⟳ Retry {retry_count}: injecting corrective hint into user message.")
+        _log("honeypot", f"⟳ Retry {retry_count}: injecting corrective hint (3-key schema).")
     else:
         messages_to_send = [
-            SystemMessage(content=HONEYPOT_SYSTEM),
+            SystemMessage(content=formatted_system_prompt),
         ] + list(prior_history) + [
             HumanMessage(content=f"$ {command}"),
         ]
@@ -277,30 +292,58 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
     response = honeypot_llm.invoke(messages_to_send)
     raw_response = response.content.strip()
 
-    # Use the layered parser for best-effort JSON extraction
-    parsed = _parse_with_fallback(raw_response, ["thought_process", "terminal_output"], "honeypot")
+    # ── C. Extraction & Validation ────────────────────────────────────────────
+    # Parser now checks for all 3 keys.
+    parsed = _parse_with_fallback(
+        raw_response,
+        ["thought_process", "machine_state", "terminal_output"],
+        "honeypot",
+    )
     is_valid = bool(parsed)
 
     new_state = dict(state)
-    new_state["is_format_valid"]     = is_valid
-    new_state["honeypot_retry_count"] = retry_count
 
     if is_valid:
-        _log("honeypot", "✅ Valid JSON received.")
+        # ── SUCCESS PATH ──────────────────────────────────────────────────────
+        _log("honeypot", "✅ Valid 3-key JSON received.")
         new_state["agent_a_cot"]            = parsed.get("thought_process", "")
+        new_state["machine_state"]          = parsed.get("machine_state", current_machine_state)
         new_state["latest_terminal_output"] = parsed.get("terminal_output", raw_response)
+        # CRITICAL: append to full_history (not the windowed slice) to preserve all turns.
         new_state["messages"] = list(full_history) + [
             AIMessage(content=new_state["latest_terminal_output"], name="honeypot")
         ]
-        _log("honeypot", f"Thought: {new_state['agent_a_cot'][:100]}...")
-        _log("honeypot", f"Terminal output: {new_state['latest_terminal_output'][:100]}...")
+        new_state["is_format_valid"]      = True
+        new_state["honeypot_retry_count"] = 0   # reset for the next turn
+        _log("honeypot", f"Thought   : {new_state['agent_a_cot'][:100]}...")
+        _log("honeypot", f"MachState : {json.dumps(new_state['machine_state'])[:120]}")
+        _log("honeypot", f"Terminal  : {new_state['latest_terminal_output'][:100]}...")
+
     else:
+        # ── FAILURE PATH ──────────────────────────────────────────────────────
         new_state["first_try_format_valid"] = False
+        next_retry = retry_count + 1
+        new_state["honeypot_retry_count"] = next_retry
         _log("honeypot", f"❌ JSON parse failed on attempt {retry_count + 1}. Raw snippet: {raw_response[:150]}")
-        # Append the bad response to history so the model sees its own mistake on retry
-        new_state["messages"] = list(full_history) + [
-            AIMessage(content=raw_response, name="honeypot_invalid")
-        ]
+
+        if next_retry >= MAX_HONEYPOT_RETRIES:
+            # Sub-gate A — Failsafe: max retries exhausted, inject fallback & break loop.
+            fallback_output = "bash: syntax error near unexpected token"
+            _log("honeypot", f"🚨 Max retries ({MAX_HONEYPOT_RETRIES}) reached. Injecting fallback terminal output.")
+            new_state["latest_terminal_output"] = fallback_output
+            # machine_state stays unchanged — scratchpad is not corrupted by a parse failure.
+            new_state["messages"] = list(full_history) + [
+                AIMessage(content=fallback_output, name="honeypot")
+            ]
+            new_state["is_format_valid"]      = True   # CRITICAL: break the loop → proceed to analyst
+            new_state["honeypot_retry_count"] = 0       # reset for the next turn
+        else:
+            # Sub-gate B — Healing: still have retries left, loop back.
+            _log("honeypot", f"⟳ Scheduling retry {next_retry}/{MAX_HONEYPOT_RETRIES}.")
+            new_state["messages"] = list(full_history) + [
+                AIMessage(content=raw_response, name="honeypot_invalid")
+            ]
+            new_state["is_format_valid"] = False   # CRITICAL: tells router to loop back
 
     return new_state
 
@@ -360,11 +403,30 @@ def save_to_tidb(state: AgentState) -> AgentState:
     turn = state.get("turn_count", 0)
     _log("db", f"Saving Turn {turn} to TiDB...")
 
-    save_log(dict(state))
+    # 1. Build a DB-safe copy — convert LangChain Message objects to plain dicts
+    #    so json.dumps (used inside save_log / TiDB drivers) never raises TypeError.
+    db_state = dict(state)
+    if "messages" in db_state:
+        safe_messages = []
+        for msg in db_state["messages"]:
+            if hasattr(msg, "content"):
+                safe_messages.append({"role": msg.type, "content": msg.content})
+            else:
+                safe_messages.append(str(msg))
+        db_state["messages"] = safe_messages
 
+    # 2. Attempt to save; catch any exception so the background thread never dies silently.
+    try:
+        save_log(db_state)
+        _log("db", f"✅ Turn {turn} saved.")
+    except Exception as e:
+        _log("db", f"❌ CRITICAL DATABASE ERROR on Turn {turn}: {e}")
+        print(traceback.format_exc())   # full stack trace visible in the terminal
+
+    # 3. Increment turn counter and return — simulation continues regardless of DB outcome.
     new_state = dict(state)
     new_state["turn_count"] = turn + 1
-    _log("db", f"Turn {turn} saved. Next turn will be {turn + 1}.")
+    _log("db", f"Proceeding to Turn {turn + 1}.")
     return new_state
 
 
@@ -374,26 +436,19 @@ def save_to_tidb(state: AgentState) -> AgentState:
 
 def route_after_honeypot(state: AgentState) -> str:
     """
-    Self-healing: retry honeypot if JSON was invalid and we haven't hit the cap.
-    Falls through to analyst (with fallback output) once retries are exhausted.
-    """
-    if not state.get("is_format_valid", True):
-        retry_count = state.get("honeypot_retry_count", 0)
-        if retry_count < MAX_HONEYPOT_RETRIES:
-            next_retry = retry_count + 1
-            _log("router", f"JSON invalid — scheduling retry {next_retry}/{MAX_HONEYPOT_RETRIES}.")
-            # Increment retry counter in state before looping back
-            state["honeypot_retry_count"] = next_retry
-            return "agent_a_honeypot"
-        else:
-            _log("router", f"❌ Max retries ({MAX_HONEYPOT_RETRIES}) exhausted. Forwarding with fallback output.")
-            # Force a safe fallback so the analyst still gets something
-            state["latest_terminal_output"] = state.get("latest_terminal_output") or "[honeypot parse error — no terminal output]"
-            state["is_format_valid"] = True  # let the graph proceed
-            return "agent_b_analyst"
+    Pure read-only traffic director — no state mutations.
+    All retry counting and fallback injection are handled inside agent_a_honeypot.
 
-    _log("router", "JSON valid — proceeding to analyst.")
-    return "agent_b_analyst"
+    is_format_valid=True  → proceed to analyst
+    is_format_valid=False → loop back to honeypot for another attempt
+    """
+    if state.get("is_format_valid", True):
+        _log("router", "JSON valid — proceeding to analyst.")
+        return "agent_b_analyst"
+    else:
+        retry_count = state.get("honeypot_retry_count", 0)
+        _log("router", f"JSON invalid — routing back to honeypot (retry {retry_count}/{MAX_HONEYPOT_RETRIES}).")
+        return "agent_a_honeypot"
 
 
 # ---------------------------------------------------------------------------
@@ -517,6 +572,7 @@ def run_simulation(
         "first_try_format_valid": True,
         "illusion_broken":        False,
         "honeypot_retry_count":  0,
+        "machine_state":         {"current_user": "attacker", "pwd": "~", "dropped_files": []},
     }
 
     # Stream events for observability; the graph persists per-turn via save_to_tidb
