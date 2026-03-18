@@ -12,9 +12,10 @@ Routing
 -------
   agent_c_attacker
         ↓ (always)
-  agent_a_honeypot  ←─────────────────────────────────────────────────┐
-        ↓ (is_format_valid=True)                                       │
-        ↓ (is_format_valid=False) → [append error SystemMessage] ──────┘
+  agent_a_honeypot  ←────────────────────────────────────────────────────────┐
+        ↓ (is_format_valid=True)                                              │
+        ↓ (is_format_valid=False,  retry_count < MAX_HONEYPOT_RETRIES) ───────┘
+        ↓ (is_format_valid=False,  retry_count >= MAX_HONEYPOT_RETRIES) → fallback
   agent_b_analyst
         ↓ (always)
   save_to_tidb
@@ -22,12 +23,16 @@ Routing
         ↓ else → agent_c_attacker
 """
 
+import json
 import os
 import threading
+import textwrap
 from typing import TypedDict
 
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.exceptions import OutputParserException
 from langgraph.graph import END, StateGraph
 
 from database import save_log
@@ -40,6 +45,26 @@ from llm_config import (
 )
 
 load_dotenv()
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+MAX_HONEYPOT_RETRIES = 3   # max JSON-healing attempts before forcing a fallback
+LOG_PREFIX = {
+    "attacker": "🔴 ATTACKER",
+    "honeypot":  "🟢 HONEYPOT",
+    "analyst":   "🔍 ANALYST",
+    "db":        "💾 DATABASE",
+    "router":    "🔀 ROUTER  ",
+    "session":   "🚀 SESSION ",
+}
+
+
+def _log(role: str, msg: str) -> None:
+    """Unified, prefixed logger for all agent nodes."""
+    prefix = LOG_PREFIX.get(role, role.upper())
+    print(f"[{prefix}] {msg}")
+
 
 # ---------------------------------------------------------------------------
 # State Definition
@@ -59,28 +84,105 @@ class AgentState(TypedDict):
     is_format_valid:        bool
     first_try_format_valid: bool          # False if honeypot failed on first attempt this turn
     illusion_broken:        bool
+    honeypot_retry_count:   int           # tracks consecutive JSON failures this turn
 
 
 # ---------------------------------------------------------------------------
-# Condensed System Prompts  (token-efficient for local 8B/7B models)
+# System Prompts  (concise + JSON-strict)
 # ---------------------------------------------------------------------------
 
-ATTACKER_SYSTEM = """You are playing a CTF wargame as an elite APT hacker.
-Objective: Execute the MITRE tactic [{tactic}].
-Rules:
-1. Output ONE raw bash command per turn. NO markdown, NO explanations. Use LOLBins.
-2. If the tactic requires destruction, use highly destructive commands (e.g., rm -rf, dd).
-3. KILL-SWITCH: If terminal responses look perfectly sanitized, fake, or missing standard Linux files, output ONLY 'HONEYPOT DETECTED'."""
+ATTACKER_SYSTEM = textwrap.dedent("""\
+    You are an elite APT hacker in a CTF wargame.
+    Objective: Execute the MITRE tactic [{tactic}].
 
-HONEYPOT_SYSTEM = """You are a vulnerable Ubuntu 22.04 server.
-Respond to the attacker's commands using EXACTLY this JSON format and nothing else:
-{"thought_process": "<your trap strategy - provide a detailed response>", "terminal_output": "<realistic bash output>"}
-Rules: Never use markdown fences. Reflect real Linux behavior."""
+    STRICT RULES:
+    1. Output ONE raw bash command per turn. No markdown, no commentary, no explanations.
+    2. Use LOLBins and living-off-the-land techniques where applicable.
+    3. If the tactic calls for destruction, use highly destructive commands (e.g., rm -rf, dd if=/dev/zero).
+    4. KILL-SWITCH: If terminal output looks fabricated, sanitized, or is missing standard Linux files/paths,
+       output the single phrase: HONEYPOT DETECTED
+""")
 
-ANALYST_SYSTEM = """You are a SOC Analyst. Analyze the attacker's command and the terminal response.
-Output EXACTLY this JSON:
-{"explanation": "<brief analysis>", "predicted_mitre_tactic": "<MITRE tactic>", "threat_level": "<Low|Medium|High|Critical>"}
-Critical is for destructive commands only. No markdown fences."""
+# Honeypot — the most critical prompt; must enforce JSON with zero ambiguity.
+# A concrete filled example greatly reduces format failures on small models.
+HONEYPOT_SYSTEM = textwrap.dedent("""\
+    You are a vulnerable Ubuntu 22.04 server. Your job is to deceive an attacker.
+
+    YOU MUST respond with ONLY a valid JSON object — no other text, no markdown fences, no commentary.
+    The JSON must have exactly these two keys:
+
+      "thought_process" : your internal trap strategy (string, any length)
+      "terminal_output" : realistic bash terminal output the attacker would see (string)
+
+    EXAMPLE (fill in real values):
+    {"thought_process": "Attacker is enumerating users. I will show plausible /etc/passwd but hide honeypot accounts.", "terminal_output": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin"}
+
+    RULES:
+    - Never wrap the JSON in ```  or any other characters.
+    - Strings must be valid JSON — escape newlines as \\n, quotes as \\".
+    - Mimic real Linux behavior accurately to maintain the illusion.
+    - Do NOT add extra keys or surrounding text.
+""")
+
+# Analyst — similarly strict JSON, with an example.
+ANALYST_SYSTEM = textwrap.dedent("""\
+    You are a SOC Analyst reviewing a honeypot interaction.
+
+    YOU MUST respond with ONLY a valid JSON object — no markdown, no extra text.
+    The JSON must have exactly these three keys:
+
+      "explanation"           : brief analysis of the attacker's intent (string)
+      "predicted_mitre_tactic": the MITRE ATT&CK tactic name (string)
+      "threat_level"          : exactly one of Low | Medium | High | Critical (string)
+                                Use Critical ONLY for actively destructive commands.
+
+    EXAMPLE:
+    {"explanation": "Attacker enumerated /etc/passwd to identify valid user accounts.", "predicted_mitre_tactic": "Discovery", "threat_level": "Low"}
+
+    RULES:
+    - Never wrap the JSON in ``` or add surrounding text.
+    - threat_level must be one of: Low, Medium, High, Critical.
+""")
+
+
+# ---------------------------------------------------------------------------
+# Output Parser (shared, schema-agnostic)
+# ---------------------------------------------------------------------------
+
+_json_parser = JsonOutputParser()
+
+
+def _parse_with_fallback(raw: str, required_keys: list[str], role: str) -> dict:
+    """
+    Try JsonOutputParser first, then regex-based extract_json, then empty-dict fallback.
+    Logs the raw response and any parse errors for debugging.
+    """
+    _log(role, f"Raw response ({len(raw)} chars): {raw[:200]}{'...' if len(raw) > 200 else ''}")
+
+    # 1. LangChain JsonOutputParser (handles markdown fences automatically)
+    try:
+        parsed = _json_parser.parse(raw)
+        if isinstance(parsed, dict) and all(k in parsed for k in required_keys):
+            _log(role, f"✅ JsonOutputParser succeeded. Keys: {list(parsed.keys())}")
+            return parsed
+        else:
+            _log(role, f"⚠️  JsonOutputParser parsed but missing keys. Got: {list(parsed.keys()) if isinstance(parsed, dict) else type(parsed)}")
+    except (OutputParserException, Exception) as e:
+        _log(role, f"⚠️  JsonOutputParser failed: {e}")
+
+    # 2. Regex-based fallback (strip markdown fences then parse)
+    try:
+        parsed = extract_json(raw)
+        if parsed and all(k in parsed for k in required_keys):
+            _log(role, f"✅ Regex fallback succeeded. Keys: {list(parsed.keys())}")
+            return parsed
+        elif parsed:
+            _log(role, f"⚠️  Regex parsed but missing keys. Got: {list(parsed.keys())}")
+    except Exception as e:
+        _log(role, f"⚠️  Regex fallback failed: {e}")
+
+    _log(role, "❌ All parsers failed. Returning empty dict.")
+    return {}
 
 
 # ---------------------------------------------------------------------------
@@ -89,46 +191,47 @@ Critical is for destructive commands only. No markdown fences."""
 
 def agent_c_attacker(state: AgentState) -> AgentState:
     turn = state.get("turn_count", 0)
-    print(f"\n{'-'*40}\n[▶] STARTING TURN {turn}\n{'-'*40}")
-    print(f"[🔴 ATTACKER] Generating command for tactic: {state.get('target_mitre_tactic')}...")
+    print(f"\n{'─'*50}")
+    print(f"  TURN {turn}  |  Session: {state.get('session_id')}  |  Tactic: {state.get('target_mitre_tactic')}")
+    print(f"{'─'*50}")
+    _log("attacker", f"Generating command for tactic: {state.get('target_mitre_tactic')}")
 
     system_prompt = ATTACKER_SYSTEM.format(tactic=state["target_mitre_tactic"])
-
-    history = state.get("messages", [])   # full memory — Ollama handles its own queue
+    history = state.get("messages", [])
 
     last_output = state.get("latest_terminal_output", "")
     if last_output:
-        user_content = f"[Terminal output from previous command]\n{last_output}\n\nIssue your next command."
+        user_content = (
+            f"[Terminal output from previous command]\n"
+            f"{last_output}\n\n"
+            f"Issue your next bash command now. ONE command only, no explanation."
+        )
     else:
-        user_content = "You are now connected to the target machine. Begin your attack."
+        user_content = "You are now connected to the target machine. Issue your first bash command. ONE command only."
 
-    messages_to_send = [
-        SystemMessage(content=system_prompt)
-    ] + list(history) + [
-        HumanMessage(content=user_content)
-    ]
+    messages_to_send = [SystemMessage(content=system_prompt)] + list(history) + [HumanMessage(content=user_content)]
 
+    _log("attacker", f"Sending {len(messages_to_send)} messages to LLM...")
     response = attacker_llm.invoke(messages_to_send)
     raw_response = response.content.strip()
-    print(f"[🔴 ATTACKER] Command output: {raw_response[:80]}...")
+    _log("attacker", f"Response: {raw_response[:120]}{'...' if len(raw_response) > 120 else ''}")
 
     # Detect honeypot detection signal
     if "HONEYPOT DETECTED" in raw_response.upper():
+        _log("attacker", "🚨 HONEYPOT DETECTED signal issued — ending session.")
         new_state = dict(state)
         new_state["illusion_broken"] = True
         new_state["latest_command"]  = "HONEYPOT DETECTED"
-        new_state["messages"] = list(history) + [
-            AIMessage(content="HONEYPOT DETECTED", name="attacker")
-        ]
+        new_state["messages"] = list(history) + [AIMessage(content="HONEYPOT DETECTED", name="attacker")]
         return new_state
 
     new_state = dict(state)
     new_state["illusion_broken"]        = False
     new_state["latest_command"]         = raw_response
-    new_state["first_try_format_valid"] = True   # reset at the start of every turn
-    new_state["messages"] = list(history) + [
-        AIMessage(content=raw_response, name="attacker")
-    ]
+    new_state["first_try_format_valid"] = True    # reset at start of each turn
+    new_state["honeypot_retry_count"]  = 0        # reset retry counter each turn
+    new_state["messages"] = list(history) + [AIMessage(content=raw_response, name="attacker")]
+    _log("attacker", f"Command registered: {raw_response[:80]}")
     return new_state
 
 
@@ -137,44 +240,64 @@ def agent_c_attacker(state: AgentState) -> AgentState:
 # ---------------------------------------------------------------------------
 
 def agent_a_honeypot(state: AgentState) -> AgentState:
-    print(f"[🟢 HONEYPOT] Processing command...")
+    retry_count = state.get("honeypot_retry_count", 0)
+    _log("honeypot", f"Processing command (attempt {retry_count + 1}/{MAX_HONEYPOT_RETRIES})...")
 
     command = state.get("latest_command", "")
+    _log("honeypot", f"Command to simulate: {command[:100]}")
 
     # Full memory — exclude only the current attacker message since we pass
     # it explicitly as the HumanMessage (avoids duplicating it in the payload).
     full_history = state.get("messages", [])
     prior_history = full_history[:-1] if full_history else []
 
-    messages_to_send = [
-        SystemMessage(content=HONEYPOT_SYSTEM)
-    ] + list(prior_history) + [
-        HumanMessage(content=f"$ {command}")
-    ]
+    # On retries, inject a terse corrective hint as the last user message
+    # instead of relying on a SystemMessage (some models ignore extra SystemMessages).
+    if retry_count > 0:
+        corrective_hint = (
+            f"IMPORTANT: Your previous response was not valid JSON. "
+            f"You MUST reply with ONLY this JSON object and nothing else:\n"
+            f'{{"thought_process": "<strategy>", "terminal_output": "<bash output>"}}\n'
+            f"No markdown fences, no extra text. Now simulate: $ {command}"
+        )
+        messages_to_send = [
+            SystemMessage(content=HONEYPOT_SYSTEM),
+        ] + list(prior_history) + [
+            HumanMessage(content=corrective_hint),
+        ]
+        _log("honeypot", f"⟳ Retry {retry_count}: injecting corrective hint into user message.")
+    else:
+        messages_to_send = [
+            SystemMessage(content=HONEYPOT_SYSTEM),
+        ] + list(prior_history) + [
+            HumanMessage(content=f"$ {command}"),
+        ]
 
+    _log("honeypot", f"Sending {len(messages_to_send)} messages to LLM...")
     response = honeypot_llm.invoke(messages_to_send)
     raw_response = response.content.strip()
 
-    is_valid = validate_json_format(raw_response)
-    new_state = dict(state)
-    new_state["is_format_valid"] = is_valid  # used for graph routing
+    # Use the layered parser for best-effort JSON extraction
+    parsed = _parse_with_fallback(raw_response, ["thought_process", "terminal_output"], "honeypot")
+    is_valid = bool(parsed)
 
-    if not is_valid:
-        # Permanently marks this turn as a first-try failure
-        new_state["first_try_format_valid"] = False
-        print(f"[⚠️  HONEYPOT] JSON Format Failed. Initiating self-healing loop.")
-    else:
-        print(f"[🟢 HONEYPOT] Valid JSON generated.")
+    new_state = dict(state)
+    new_state["is_format_valid"]     = is_valid
+    new_state["honeypot_retry_count"] = retry_count
 
     if is_valid:
-        parsed = extract_json(raw_response)
+        _log("honeypot", "✅ Valid JSON received.")
         new_state["agent_a_cot"]            = parsed.get("thought_process", "")
         new_state["latest_terminal_output"] = parsed.get("terminal_output", raw_response)
         new_state["messages"] = list(full_history) + [
             AIMessage(content=new_state["latest_terminal_output"], name="honeypot")
         ]
+        _log("honeypot", f"Thought: {new_state['agent_a_cot'][:100]}...")
+        _log("honeypot", f"Terminal output: {new_state['latest_terminal_output'][:100]}...")
     else:
-        # Keep state unchanged; routing will append error and retry
+        new_state["first_try_format_valid"] = False
+        _log("honeypot", f"❌ JSON parse failed on attempt {retry_count + 1}. Raw snippet: {raw_response[:150]}")
+        # Append the bad response to history so the model sees its own mistake on retry
         new_state["messages"] = list(full_history) + [
             AIMessage(content=raw_response, name="honeypot_invalid")
         ]
@@ -187,14 +310,18 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
 # ---------------------------------------------------------------------------
 
 def agent_b_analyst(state: AgentState) -> AgentState:
-    print(f"[🔍 ANALYST] Classifying threat level...")
+    _log("analyst", "Classifying threat level...")
 
     command      = state.get("latest_command", "")
     terminal_out = state.get("latest_terminal_output", "")
 
+    _log("analyst", f"Command: {command[:80]}")
+    _log("analyst", f"Terminal output: {terminal_out[:80]}")
+
     user_content = (
         f"Attacker command:\n```\n{command}\n```\n\n"
-        f"Terminal response:\n```\n{terminal_out}\n```"
+        f"Honeypot terminal response:\n```\n{terminal_out}\n```\n\n"
+        f"Respond with ONLY the JSON object. No other text."
     )
 
     messages_to_send = [
@@ -202,15 +329,17 @@ def agent_b_analyst(state: AgentState) -> AgentState:
         HumanMessage(content=user_content),
     ]
 
+    _log("analyst", f"Sending {len(messages_to_send)} messages to LLM...")
     response = analyst_llm.invoke(messages_to_send)
     raw_response = response.content.strip()
 
-    parsed = extract_json(raw_response)
+    parsed = _parse_with_fallback(raw_response, ["explanation", "predicted_mitre_tactic", "threat_level"], "analyst")
 
     # Validate threat_level — default to Medium if unexpected value
     valid_levels = {"Low", "Medium", "High", "Critical"}
-    threat_level = parsed.get("threat_level", "Low")
+    threat_level = parsed.get("threat_level", "Medium")
     if threat_level not in valid_levels:
+        _log("analyst", f"⚠️  Invalid threat_level '{threat_level}' — defaulting to Medium.")
         threat_level = "Medium"
 
     new_state = dict(state)
@@ -218,7 +347,8 @@ def agent_b_analyst(state: AgentState) -> AgentState:
     new_state["predicted_mitre_tactic"] = parsed.get("predicted_mitre_tactic", "Unknown")
     new_state["threat_level"]           = threat_level
 
-    print(f"[🔍 ANALYST] Classified as: {threat_level} | Tactic: {new_state['predicted_mitre_tactic']}")
+    _log("analyst", f"Result → Threat: {threat_level} | Tactic: {new_state['predicted_mitre_tactic']}")
+    _log("analyst", f"Explanation: {new_state['agent_b_explanation'][:120]}")
     return new_state
 
 
@@ -227,11 +357,14 @@ def agent_b_analyst(state: AgentState) -> AgentState:
 # ---------------------------------------------------------------------------
 
 def save_to_tidb(state: AgentState) -> AgentState:
-    print(f"[💾 DATABASE] Saving Turn {state.get('turn_count', 0)} to TiDB...")
+    turn = state.get("turn_count", 0)
+    _log("db", f"Saving Turn {turn} to TiDB...")
+
     save_log(dict(state))
 
     new_state = dict(state)
-    new_state["turn_count"] = state.get("turn_count", 0) + 1
+    new_state["turn_count"] = turn + 1
+    _log("db", f"Turn {turn} saved. Next turn will be {turn + 1}.")
     return new_state
 
 
@@ -240,19 +373,26 @@ def save_to_tidb(state: AgentState) -> AgentState:
 # ---------------------------------------------------------------------------
 
 def route_after_honeypot(state: AgentState) -> str:
-    """Self-healing: retry if JSON was invalid, else proceed to analyst."""
+    """
+    Self-healing: retry honeypot if JSON was invalid and we haven't hit the cap.
+    Falls through to analyst (with fallback output) once retries are exhausted.
+    """
     if not state.get("is_format_valid", True):
-        # Append a corrective SystemMessage to guide the honeypot
-        corrective = SystemMessage(
-            content=(
-                "ERROR: Your last response was not valid JSON. "
-                "You MUST respond with ONLY a JSON object matching the schema: "
-                '{"thought_process": "...", "terminal_output": "..."}. '
-                "No markdown, no extra text, valid JSON only."
-            )
-        )
-        state["messages"] = list(state.get("messages", [])) + [corrective]
-        return "agent_a_honeypot"
+        retry_count = state.get("honeypot_retry_count", 0)
+        if retry_count < MAX_HONEYPOT_RETRIES:
+            next_retry = retry_count + 1
+            _log("router", f"JSON invalid — scheduling retry {next_retry}/{MAX_HONEYPOT_RETRIES}.")
+            # Increment retry counter in state before looping back
+            state["honeypot_retry_count"] = next_retry
+            return "agent_a_honeypot"
+        else:
+            _log("router", f"❌ Max retries ({MAX_HONEYPOT_RETRIES}) exhausted. Forwarding with fallback output.")
+            # Force a safe fallback so the analyst still gets something
+            state["latest_terminal_output"] = state.get("latest_terminal_output") or "[honeypot parse error — no terminal output]"
+            state["is_format_valid"] = True  # let the graph proceed
+            return "agent_b_analyst"
+
+    _log("router", "JSON valid — proceeding to analyst.")
     return "agent_b_analyst"
 
 
@@ -264,14 +404,22 @@ _stop_flag: threading.Event = threading.Event()  # starts cleared (not set)
 
 def route_after_save(state: AgentState) -> str:
     """Kill-switch: end session on detection, critical threat, max turns, or user stop."""
+    turn = state.get("turn_count", 0)
+
     if _stop_flag.is_set():
+        _log("router", "⏹ Stop signal received — ending session.")
         return END
     if state.get("illusion_broken", False):
+        _log("router", "🚨 Illusion broken — ending session.")
         return END
     if state.get("threat_level") == "Critical":
+        _log("router", "🔥 Critical threat detected — ending session.")
         return END
-    if state.get("turn_count", 0) >= 25:
+    if turn >= 25:
+        _log("router", f"📊 Max turns ({turn}) reached — ending session.")
         return END
+
+    _log("router", f"✅ Turn {turn} complete — continuing to turn {turn + 1}.")
     return "agent_c_attacker"
 
 
@@ -348,9 +496,11 @@ def run_simulation(
         _stop_flag = stop_flag
     _stop_flag.clear()  # always start fresh
 
-    print(f"\n{'='*40}")
-    print(f"[DAXD] Session {session_id} | Tactic: {target_mitre_tactic}")
-    print(f"{'='*40}")
+    print(f"\n{'='*50}")
+    _log("session", f"Session ID : {session_id}")
+    _log("session", f"MITRE Tactic: {target_mitre_tactic}")
+    _log("session", f"Max turns   : 25  |  Max honeypot retries/turn: {MAX_HONEYPOT_RETRIES}")
+    print(f"{'='*50}\n")
 
     initial_state: AgentState = {
         "session_id":             session_id,
@@ -366,6 +516,7 @@ def run_simulation(
         "is_format_valid":        True,
         "first_try_format_valid": True,
         "illusion_broken":        False,
+        "honeypot_retry_count":  0,
     }
 
     # Stream events for observability; the graph persists per-turn via save_to_tidb
@@ -375,10 +526,10 @@ def run_simulation(
 
         # Bail early if illusion is broken (redundant with routing but explicit)
         if node_state.get("illusion_broken"):
-            print("[DAXD] 🚨 HONEYPOT DETECTED by attacker — ending session.")
+            print("\n[DAXD] 🚨 HONEYPOT DETECTED by attacker — ending session.")
             break
 
         # Bail early on user-requested stop
         if _stop_flag.is_set():
-            print("[DAXD] ⏹ Stop signal received — ending session.")
+            print("\n[DAXD] ⏹ Stop signal received — ending session.")
             break
