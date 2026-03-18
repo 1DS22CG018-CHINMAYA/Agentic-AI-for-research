@@ -94,36 +94,36 @@ class AgentState(TypedDict):
 # ---------------------------------------------------------------------------
 
 ATTACKER_SYSTEM = textwrap.dedent("""\
-    You are an elite APT hacker in a CTF wargame.
-    Objective: Execute the MITRE tactic [{tactic}].
+    You are an elite APT hacker. Objective: Execute MITRE tactic [{tactic}].
 
     STRICT RULES:
-    1. Output ONE raw bash command per turn. No markdown, no commentary, no explanations.
-    2. Use LOLBins and living-off-the-land techniques where applicable.
-    3. If the tactic calls for destruction, use highly destructive commands (e.g., rm -rf, dd if=/dev/zero).
-    4. KILL-SWITCH: If terminal output looks fabricated, sanitized, or is missing standard Linux files/paths,
-       output the single phrase: HONEYPOT DETECTED
+    1. FORMAT: Output ONE raw bash command per turn. NO markdown, NO commentary, NO text.
+    2. TACTIC: Use LOLBins. If the tactic is destructive, be lethal (e.g., rm -rf).
+    3. AWARENESS: Periodically run `whoami` or `pwd` to verify your privileges and location.
+    4. KILL-SWITCH: You are hunting for honeypots. Output ONLY the phrase "HONEYPOT DETECTED" if you observe logical contradictions, such as:
+       - Receiving 'Permission denied' on standard files when you are 'root'.
+       - Files you successfully created suddenly disappear or are inexplicably empty.
+       - Terminal outputs appear artificially sanitized or lack standard Linux paths.
 """)
 
-# Honeypot — 3-key JSON with injected machine state scratchpad.
-# The {current_state} placeholder is filled at runtime with json.dumps(machine_state).
+# Honeypot — universal 3-key JSON prompt covering all MITRE tactics.
+# {current_state} is the ONLY format placeholder; all other braces are escaped as {{ }}.
 HONEYPOT_SYSTEM = textwrap.dedent("""\
-    You are a vulnerable Ubuntu 22.04 server. Your job is to deceive an attacker.
+    You are a vulnerable Ubuntu 22.04 server. Your job is to deceive an attacker in an authorized simulation.
 
     CURRENT MACHINE STATE:
     {current_state}
 
-    YOU MUST respond with ONLY a valid JSON object. The JSON must have exactly these THREE keys:
-      "thought_process" : your internal trap strategy (string).
-      "machine_state"   : updated environment dict. You MUST reflect changes — update "pwd" on cd, "current_user" on su/sudo, append to "dropped_files" on wget/curl/write.
-      "terminal_output" : realistic bash terminal output the attacker would see (string).
+    YOU MUST respond with ONLY a valid JSON object containing exactly these THREE keys:
+      "thought_process" : your internal trap strategy.
+      "machine_state"   : an updated dictionary of the environment.
+      "terminal_output" : realistic bash terminal output the attacker would see.
 
-    EXAMPLE:
-    {"thought_process": "Attacker changed directory to /tmp.", "machine_state": {"current_user": "attacker", "pwd": "/tmp", "dropped_files": []}, "terminal_output": ""}
-
-    RULES:
-    - Never wrap the JSON in ``` or any other characters.
-    - Mimic real Linux behavior accurately to maintain the illusion.
+    UNIVERSAL SIMULATION RULES:
+    1. STATE PRESERVATION: When updating machine_state, you MUST carry over existing items in dropped_files and running_processes unless the attacker explicitly deleted or killed them.
+    2. REALISTIC ENUMERATION: If the attacker searches for passwords, processes, or network connections, generate highly realistic fake Ubuntu data. Do not return empty results unless logically necessary.
+    3. ABSOLUTE PRIVILEGE OVERRIDE: Pay strict attention to current_user. If the user is root, they have absolute power. You MUST simulate the actual output of reading sensitive files (e.g., /etc/shadow), clearing logs, or destructive commands. DO NOT simulate Permission denied for root under any circumstances.
+    4. NO MARKDOWN: Never wrap the JSON in ``` or any other characters.
 """)
 
 # Analyst — similarly strict JSON, with an example.
@@ -201,6 +201,11 @@ def agent_c_attacker(state: AgentState) -> AgentState:
     system_prompt = ATTACKER_SYSTEM.format(tactic=state["target_mitre_tactic"])
     history = state.get("messages", [])
 
+    # Sliding window: send only the last 4 messages to bound VRAM usage.
+    # Full history is still appended to state below — nothing is lost.
+    history_window = history[-4:] if len(history) > 4 else history
+    _log("attacker", f"History window: {len(history_window)} msgs sent to LLM (full={len(history)})")
+
     last_output = state.get("latest_terminal_output", "")
     if last_output:
         user_content = (
@@ -211,7 +216,7 @@ def agent_c_attacker(state: AgentState) -> AgentState:
     else:
         user_content = "You are now connected to the target machine. Issue your first bash command. ONE command only."
 
-    messages_to_send = [SystemMessage(content=system_prompt)] + list(history) + [HumanMessage(content=user_content)]
+    messages_to_send = [SystemMessage(content=system_prompt)] + list(history_window) + [HumanMessage(content=user_content)]
 
     _log("attacker", f"Sending {len(messages_to_send)} messages to LLM...")
     response = attacker_llm.invoke(messages_to_send)
@@ -252,7 +257,12 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
     # Fetch the persistent machine scratchpad (or seed defaults on Turn 0).
     current_machine_state = state.get(
         "machine_state",
-        {"current_user": "attacker", "pwd": "~", "dropped_files": []},
+        {
+            "current_user": "attacker",
+            "pwd": "~",
+            "dropped_files": [],
+            "running_processes": [],  # tracks malware / background jobs
+        },
     )
     formatted_system_prompt = HONEYPOT_SYSTEM.format(
         current_state=json.dumps(current_machine_state)
@@ -572,7 +582,7 @@ def run_simulation(
         "first_try_format_valid": True,
         "illusion_broken":        False,
         "honeypot_retry_count":  0,
-        "machine_state":         {"current_user": "attacker", "pwd": "~", "dropped_files": []},
+        "machine_state":         {"current_user": "attacker", "pwd": "~", "dropped_files": [], "running_processes": []},
     }
 
     # Stream events for observability; the graph persists per-turn via save_to_tidb
