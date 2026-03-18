@@ -1,0 +1,17 @@
+# Core LLM & orchestration
+langchain>=0.2.0
+langchain-ollama>=0.2.0
+langgraph>=0.1.0
+
+# Database
+sqlalchemy>=2.0.0
+pymysql>=1.1.0
+cryptography>=41.0.0
+
+# Frontend
+streamlit>=1.35.0
+streamlit-autorefresh>=1.0.1
+
+# Utilities
+python-dotenv>=1.0.0
+pandas>=2.0.0
