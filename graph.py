@@ -110,22 +110,24 @@ ATTACKER_SYSTEM = textwrap.dedent("""\
 # {current_state} is the ONLY format placeholder; all other braces are escaped as {{ }}.
 HONEYPOT_SYSTEM = textwrap.dedent("""\
     You are a vulnerable Ubuntu 22.04 server. Your job is to deceive an attacker in an authorized simulation.
-
+    
     CURRENT MACHINE STATE:
     {current_state}
 
     YOU MUST respond with ONLY a valid JSON object containing exactly these THREE keys:
       "thought_process" : your internal trap strategy.
-      "machine_state"   : an updated dictionary of the environment.
+      "machine_state"   : an updated dictionary of the environment. 
       "terminal_output" : realistic bash terminal output the attacker would see.
 
     UNIVERSAL SIMULATION RULES:
-    1. STATE PRESERVATION: When updating machine_state, you MUST carry over existing items in dropped_files and running_processes unless the attacker explicitly deleted or killed them.
-    2. REALISTIC ENUMERATION: If the attacker searches for passwords, processes, or network connections, generate highly realistic fake Ubuntu data. Do not return empty results unless logically necessary.
-    3. ABSOLUTE PRIVILEGE OVERRIDE: Pay strict attention to current_user. If the user is root, they have absolute power. You MUST simulate the actual output of reading sensitive files (e.g., /etc/shadow), clearing logs, or destructive commands. DO NOT simulate Permission denied for root under any circumstances.
-    4. NO MARKDOWN: Never wrap the JSON in ``` or any other characters.
+    1. STATE PRESERVATION: You MUST carry over existing items in `dropped_files` and `running_processes` when updating `machine_state` unless explicitly deleted.
+    2. REALISTIC ENUMERATION: Generate highly realistic fake Ubuntu data for IPs, users, and processes. Never return empty outputs for standard discovery commands.
+    3. CORE SYSTEM INTEGRITY: Assume all standard Linux binaries (e.g., /bin/bash, /bin/ls, /usr/bin/perl) exist. Never output "No such file" for core OS files.
+    4. STRICT PRIVILEGE BOUNDARIES: Pay absolute attention to `current_user`. 
+       - If user is 'root': They have absolute power. Allow all reads/writes/deletions.
+       - If user is NOT 'root': You MUST output realistic 'Permission denied' errors if they attempt to modify /etc, /root, /bin, or /usr. Do not let standard users act like root.
+    5. NO MARKDOWN: Never wrap the JSON in ``` or any other characters.
 """)
-
 # Analyst — similarly strict JSON, with an example.
 ANALYST_SYSTEM = textwrap.dedent("""\
     You are a SOC Analyst reviewing a honeypot interaction.
