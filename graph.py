@@ -260,8 +260,8 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
     current_machine_state = state.get(
         "machine_state",
         {
-            "current_user": "attacker",
-            "pwd": "~",
+            "current_user": "www-data",
+            "pwd": "/var/www/html",
             "dropped_files": [],
             "running_processes": [],  # tracks malware / background jobs
         },
@@ -294,10 +294,14 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
         ]
         _log("honeypot", f"⟳ Retry {retry_count}: injecting corrective hint (3-key schema).")
     else:
+        prompt_anchor = (
+            f"Execute this command: $ {command}\n\n"
+            f"Respond ONLY with a valid JSON object starting with {{"
+        )
         messages_to_send = [
             SystemMessage(content=formatted_system_prompt),
         ] + list(prior_history) + [
-            HumanMessage(content=f"$ {command}"),
+            HumanMessage(content=prompt_anchor),
         ]
 
     _log("honeypot", f"Sending {len(messages_to_send)} messages to LLM...")

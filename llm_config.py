@@ -29,18 +29,21 @@ attacker_llm = ChatOllama(
     model       = ATTACKER_MODEL,
     base_url    = OLLAMA_BASE_URL,
     temperature = 0.7,
+    timeout     = 240,
 )
 
 honeypot_llm = ChatOllama(
     model       = HONEYPOT_MODEL,
     base_url    = OLLAMA_BASE_URL,
     temperature = 0.1,   # low temp for strict JSON discipline
+     timeout     = 240,
 )
 
 analyst_llm = ChatOllama(
     model       = ANALYST_MODEL,
     base_url    = OLLAMA_BASE_URL,
     temperature = 0.1,   # analytical — want consistent JSON
+     timeout     = 240,
 )
 
 

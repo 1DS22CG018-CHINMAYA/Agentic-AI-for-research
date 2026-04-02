@@ -1,0 +1,3 @@
+Metric,hybrid_mean,baseline_mean,hybrid_std,baseline_std,hybrid_n,baseline_n,delta,t_stat,t_pvalue,u_stat,u_pvalue,significant_t,significant_u
+Accuracy,3.67,3.88,0.8294,0.9458,100,100,-0.21,-1.6693,0.096658,4330.0,0.084542,False,False
+Groundedness,4.47,4.67,0.8463,0.6365,100,100,-0.2,-1.8886,0.060516,4475.0,0.109901,False,False

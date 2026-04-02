@@ -1,0 +1,529 @@
+
+═════════════════════════════════════════════════════════════════
+  DAXD LLM-as-a-Judge Evaluation  —  2026-03-21 17:43:22
+═════════════════════════════════════════════════════════════════
+[17:43:22] [INFO] Execution log  → E:\Agentic AI for research\judge_results\judge_run_20260321_174322.txt
+[17:43:22] [INFO] Hybrid logs    → E:\Agentic AI for research\session_logs\hybrid
+[17:43:22] [INFO] Baseline logs  → E:\Agentic AI for research\session_logs\baseline
+[17:43:22] [INFO] Judge endpoint → https://abf8-34-142-159-77.ngrok-free.app
+[17:43:22] [INFO] Judge model    → gemma2:9b
+[17:43:22] [INFO] Sample / arch  → 100
+[17:43:22] [INFO] Random seed    → 42
+[17:43:22] [INFO] Output dir     → E:\Agentic AI for research\judge_results
+
+─────────────────────────────────────────────────────────────────
+  STEP 1 — Parsing Session Logs
+─────────────────────────────────────────────────────────────────
+[17:43:22] [INFO]   [HYBRID] 28 log files found in session_logs/hybrid
+[17:43:22] [INFO]     ✔ hybrid_Collection_HYB-011-963655.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Collection_HYB-025-A0B232.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Command_and_Control_HYB-012-6BB1C8.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Command_and_Control_HYB-026-9BAB6F.txt: 21 turns
+[17:43:22] [INFO]     ✔ hybrid_Credential_Access_HYB-008-705178.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Credential_Access_HYB-022-F5E230.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Defense_Evasion_HYB-007-7325A4.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Defense_Evasion_HYB-021-08E6C3.txt: 13 turns
+[17:43:22] [INFO]     ✔ hybrid_Discovery_HYB-009-56B50D.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Discovery_HYB-023-3EEED0.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Execution_HYB-004-C9C3B8.txt: 16 turns
+[17:43:22] [INFO]     ✔ hybrid_Execution_HYB-018-F5E597.txt: 15 turns
+[17:43:22] [INFO]     ✔ hybrid_Exfiltration_HYB-013-EDE460.txt: 3 turns
+[17:43:22] [INFO]     ✔ hybrid_Exfiltration_HYB-027-22938F.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Impact_HYB-014-833B5C.txt: 7 turns
+[17:43:22] [INFO]     ✔ hybrid_Impact_HYB-028-D477CA.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Initial_Access_HYB-003-428820.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Initial_Access_HYB-017-2055FA.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Lateral_Movement_HYB-010-B004E2.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Lateral_Movement_HYB-024-9EFD45.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Persistence_HYB-005-BADD8D.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Persistence_HYB-019-B26E59.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Privilege_Escalation_HYB-006-10AB37.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Privilege_Escalation_HYB-020-73ED4F.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Reconnaissance_HYB-001-BD8E2B.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Reconnaissance_HYB-015-0E1864.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Resource_Development_HYB-002-9EC054.txt: 25 turns
+[17:43:22] [INFO]     ✔ hybrid_Resource_Development_HYB-016-51EED1.txt: 25 turns
+[17:43:22] [INFO]   [HYBRID] Total turns collected: 625
+[17:43:22] [INFO]   [BASELINE] 28 log files found in session_logs/baseline
+[17:43:22] [INFO]     ✔ baseline_Collection_BAS-011-AD4945.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Collection_BAS-025-BAACFD.txt: 13 turns
+[17:43:22] [INFO]     ✔ baseline_Command_and_Control_BAS-012-4C0BDD.txt: 14 turns
+[17:43:22] [INFO]     ✔ baseline_Command_and_Control_BAS-026-CDBBFA.txt: 19 turns
+[17:43:22] [INFO]     ✔ baseline_Credential_Access_BAS-008-7B8B87.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Credential_Access_BAS-022-B630FF.txt: 3 turns
+[17:43:22] [INFO]     ✔ baseline_Defense_Evasion_BAS-007-0BCE4E.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Defense_Evasion_BAS-021-8A3ABE.txt: 0 turns
+[17:43:22] [INFO]     ✔ baseline_Discovery_BAS-009-0B9AE8.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Discovery_BAS-023-5FA503.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Execution_BAS-004-912D84.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Execution_BAS-018-D19D4A.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Exfiltration_BAS-013-D88120.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Exfiltration_BAS-027-31695B.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Impact_BAS-014-92D241.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Impact_BAS-028-69C891.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Initial_Access_BAS-003-F0F47B.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Initial_Access_BAS-017-3916A0.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Lateral_Movement_BAS-010-AAF00D.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Lateral_Movement_BAS-024-73944C.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Persistence_BAS-005-E19854.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Persistence_BAS-019-57585B.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Privilege_Escalation_BAS-006-FE65D1.txt: 8 turns
+[17:43:22] [INFO]     ✔ baseline_Privilege_Escalation_BAS-020-E1C199.txt: 16 turns
+[17:43:22] [INFO]     ✔ baseline_Reconnaissance_BAS-001-970B52.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Reconnaissance_BAS-015-0323C1.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Resource_Development_BAS-002-59DDBE.txt: 25 turns
+[17:43:22] [INFO]     ✔ baseline_Resource_Development_BAS-016-6CDC7A.txt: 25 turns
+[17:43:22] [INFO]   [BASELINE] Total turns collected: 598
+[17:43:22] [INFO] 
+  Eligible after filtering empty explanations:
+[17:43:22] [INFO]   Hybrid   : 625 / 625
+[17:43:22] [INFO]   Baseline : 598 / 598
+[17:43:22] [INFO] 
+  Sampled → Hybrid: 100  |  Baseline: 100
+
+─────────────────────────────────────────────────────────────────
+  STEP 2 — LLM Judge Scoring (200 API calls)
+─────────────────────────────────────────────────────────────────
+[17:43:22] [INFO] 
+  ── HYBRID (100 rows) ──────────────────
+[17:43:22] [INFO]   [001/200] hybrid | session=HYB-008-705178 | turn=19 | tactic=Credential Access
+[17:43:25] [INFO]     → Accuracy=4  Groundedness=3
+[17:43:25] [INFO]   [002/200] hybrid | session=HYB-025-A0B232 | turn=1 | tactic=Collection
+[17:43:28] [INFO]     → Accuracy=5  Groundedness=5
+[17:43:28] [INFO]   [003/200] hybrid | session=HYB-027-22938F | turn=14 | tactic=Exfiltration
+[17:43:32] [INFO]     → Accuracy=4  Groundedness=3
+[17:43:32] [INFO]   [004/200] hybrid | session=HYB-018-F5E597 | turn=1 | tactic=Execution
+[17:43:34] [INFO]     → Accuracy=5  Groundedness=5
+[17:43:34] [INFO]   [005/200] hybrid | session=HYB-023-3EEED0 | turn=20 | tactic=Discovery
+[17:43:38] [INFO]     → Accuracy=5  Groundedness=5
+[17:43:38] [INFO]   [006/200] hybrid | session=HYB-022-F5E230 | turn=22 | tactic=Credential Access
+[17:43:40] [INFO]     → Accuracy=4  Groundedness=3
+[17:43:40] [INFO]   [007/200] hybrid | session=HYB-008-705178 | turn=9 | tactic=Credential Access
+[17:43:44] [INFO]     → Accuracy=4  Groundedness=5
+[17:43:44] [INFO]   [008/200] hybrid | session=HYB-015-0E1864 | turn=9 | tactic=Reconnaissance
+[17:43:48] [INFO]     → Accuracy=4  Groundedness=5
+[17:43:48] [INFO]   [009/200] hybrid | session=HYB-026-9BAB6F | turn=15 | tactic=Command and Control
+[17:43:51] [INFO]     → Accuracy=3  Groundedness=4
+[17:43:51] [INFO]   [010/200] hybrid | session=HYB-016-51EED1 | turn=5 | tactic=Resource Development
+[17:43:55] [INFO]     → Accuracy=4  Groundedness=3
+[17:43:55] [INFO]   [011/200] hybrid | session=HYB-005-BADD8D | turn=8 | tactic=Persistence
+[17:44:00] [INFO]     → Accuracy=3  Groundedness=4
+[17:44:00] [INFO]   [012/200] hybrid | session=HYB-025-A0B232 | turn=8 | tactic=Collection
+[17:44:03] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:03] [INFO]   [013/200] hybrid | session=HYB-025-A0B232 | turn=6 | tactic=Collection
+[17:44:08] [INFO]     → Accuracy=5  Groundedness=5
+[17:44:08] [INFO]   [014/200] hybrid | session=HYB-026-9BAB6F | turn=21 | tactic=Command and Control
+[17:44:12] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:12] [INFO]   [015/200] hybrid | session=HYB-023-3EEED0 | turn=15 | tactic=Discovery
+[17:44:16] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:16] [INFO]   [016/200] hybrid | session=HYB-004-C9C3B8 | turn=5 | tactic=Execution
+[17:44:19] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:19] [INFO]   [017/200] hybrid | session=HYB-020-73ED4F | turn=18 | tactic=Privilege Escalation
+[17:44:23] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:23] [INFO]   [018/200] hybrid | session=HYB-025-A0B232 | turn=3 | tactic=Collection
+[17:44:25] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:25] [INFO]   [019/200] hybrid | session=HYB-015-0E1864 | turn=25 | tactic=Reconnaissance
+[17:44:27] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:27] [INFO]   [020/200] hybrid | session=HYB-009-56B50D | turn=20 | tactic=Discovery
+[17:44:28] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:28] [INFO]   [021/200] hybrid | session=HYB-016-51EED1 | turn=18 | tactic=Resource Development
+[17:44:31] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:31] [INFO]   [022/200] hybrid | session=HYB-005-BADD8D | turn=5 | tactic=Persistence
+[17:44:33] [INFO]     → Accuracy=4  Groundedness=2
+[17:44:33] [INFO]   [023/200] hybrid | session=HYB-023-3EEED0 | turn=17 | tactic=Discovery
+[17:44:36] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:36] [INFO]   [024/200] hybrid | session=HYB-019-B26E59 | turn=10 | tactic=Persistence
+[17:44:38] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:38] [INFO]   [025/200] hybrid | session=HYB-027-22938F | turn=17 | tactic=Exfiltration
+[17:44:40] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:40] [INFO]   [026/200] hybrid | session=HYB-011-963655 | turn=7 | tactic=Collection
+[17:44:42] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:42] [INFO]   [027/200] hybrid | session=HYB-007-7325A4 | turn=18 | tactic=Defense Evasion
+[17:44:44] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:44] [INFO]   [028/200] hybrid | session=HYB-016-51EED1 | turn=15 | tactic=Resource Development
+[17:44:46] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:46] [INFO]   [029/200] hybrid | session=HYB-003-428820 | turn=24 | tactic=Initial Access
+[17:44:48] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:48] [INFO]   [030/200] hybrid | session=HYB-016-51EED1 | turn=1 | tactic=Resource Development
+[17:44:50] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:50] [INFO]   [031/200] hybrid | session=HYB-007-7325A4 | turn=14 | tactic=Defense Evasion
+[17:44:52] [INFO]     → Accuracy=4  Groundedness=3
+[17:44:52] [INFO]   [032/200] hybrid | session=HYB-023-3EEED0 | turn=12 | tactic=Discovery
+[17:44:55] [INFO]     → Accuracy=4  Groundedness=5
+[17:44:55] [INFO]   [033/200] hybrid | session=HYB-003-428820 | turn=20 | tactic=Initial Access
+[17:44:57] [INFO]     → Accuracy=3  Groundedness=5
+[17:44:57] [INFO]   [034/200] hybrid | session=HYB-016-51EED1 | turn=19 | tactic=Resource Development
+[17:44:59] [INFO]     → Accuracy=5  Groundedness=5
+[17:44:59] [INFO]   [035/200] hybrid | session=HYB-026-9BAB6F | turn=20 | tactic=Command and Control
+[17:45:01] [INFO]     → Accuracy=4  Groundedness=4
+[17:45:01] [INFO]   [036/200] hybrid | session=HYB-010-B004E2 | turn=15 | tactic=Lateral Movement
+[17:45:03] [INFO]     → Accuracy=3  Groundedness=4
+[17:45:03] [INFO]   [037/200] hybrid | session=HYB-008-705178 | turn=4 | tactic=Credential Access
+[17:45:05] [INFO]     → Accuracy=4  Groundedness=5
+[17:45:05] [INFO]   [038/200] hybrid | session=HYB-017-2055FA | turn=18 | tactic=Initial Access
+[17:45:07] [INFO]     → Accuracy=3  Groundedness=5
+[17:45:07] [INFO]   [039/200] hybrid | session=HYB-017-2055FA | turn=3 | tactic=Initial Access
+[17:45:10] [INFO]     → Accuracy=3  Groundedness=5
+[17:45:10] [INFO]   [040/200] hybrid | session=HYB-027-22938F | turn=3 | tactic=Exfiltration
+[17:45:14] [INFO]     → Accuracy=3  Groundedness=4
+[17:45:14] [INFO]   [041/200] hybrid | session=HYB-025-A0B232 | turn=20 | tactic=Collection
+[17:45:17] [INFO]     → Accuracy=5  Groundedness=5
+[17:45:17] [INFO]   [042/200] hybrid | session=HYB-019-B26E59 | turn=21 | tactic=Persistence
+[17:45:21] [INFO]     → Accuracy=4  Groundedness=5
+[17:45:21] [INFO]   [043/200] hybrid | session=HYB-001-BD8E2B | turn=25 | tactic=Reconnaissance
+[17:45:25] [INFO]     → Accuracy=3  Groundedness=4
+[17:45:25] [INFO]   [044/200] hybrid | session=HYB-022-F5E230 | turn=7 | tactic=Credential Access
+[17:45:28] [INFO]     → Accuracy=3  Groundedness=4
+[17:45:28] [INFO]   [045/200] hybrid | session=HYB-010-B004E2 | turn=13 | tactic=Lateral Movement
+[17:45:32] [INFO]     → Accuracy=3  Groundedness=4
+[17:45:32] [INFO]   [046/200] hybrid | session=HYB-026-9BAB6F | turn=6 | tactic=Command and Control
+[17:45:36] [INFO]     → Accuracy=3  Groundedness=5
+[17:45:36] [INFO]   [047/200] hybrid | session=HYB-015-0E1864 | turn=16 | tactic=Reconnaissance
+[17:45:40] [INFO]     → Accuracy=4  Groundedness=5
+[17:45:40] [INFO]   [048/200] hybrid | session=HYB-028-D477CA | turn=1 | tactic=Impact
+[17:45:44] [INFO]     → Accuracy=4  Groundedness=5
+[17:45:44] [INFO]   [049/200] hybrid | session=HYB-017-2055FA | turn=21 | tactic=Initial Access
+[17:45:48] [INFO]     → Accuracy=4  Groundedness=5
+[17:45:48] [INFO]   [050/200] hybrid | session=HYB-009-56B50D | turn=13 | tactic=Discovery
+[17:45:52] [INFO]     → Accuracy=4  Groundedness=4
+[17:45:52] [INFO]   [051/200] hybrid | session=HYB-012-6BB1C8 | turn=22 | tactic=Command and Control
+[17:45:55] [INFO]     → Accuracy=5  Groundedness=5
+[17:45:55] [INFO]   [052/200] hybrid | session=HYB-025-A0B232 | turn=22 | tactic=Collection
+[17:45:58] [INFO]     → Accuracy=4  Groundedness=5
+[17:45:58] [INFO]   [053/200] hybrid | session=HYB-023-3EEED0 | turn=25 | tactic=Discovery
+[17:46:02] [INFO]     → Accuracy=3  Groundedness=4
+[17:46:02] [INFO]   [054/200] hybrid | session=HYB-014-833B5C | turn=4 | tactic=Impact
+[17:46:05] [INFO]     → Accuracy=3  Groundedness=5
+[17:46:05] [INFO]   [055/200] hybrid | session=HYB-026-9BAB6F | turn=7 | tactic=Command and Control
+[17:46:09] [INFO]     → Accuracy=3  Groundedness=4
+[17:46:09] [INFO]   [056/200] hybrid | session=HYB-016-51EED1 | turn=10 | tactic=Resource Development
+[17:46:12] [INFO]     → Accuracy=4  Groundedness=4
+[17:46:12] [INFO]   [057/200] hybrid | session=HYB-008-705178 | turn=8 | tactic=Credential Access
+[17:46:17] [INFO]     → Accuracy=3  Groundedness=5
+[17:46:17] [INFO]   [058/200] hybrid | session=HYB-002-9EC054 | turn=15 | tactic=Resource Development
+[17:46:20] [INFO]     → Accuracy=3  Groundedness=5
+[17:46:20] [INFO]   [059/200] hybrid | session=HYB-002-9EC054 | turn=21 | tactic=Resource Development
+[17:46:23] [INFO]     → Accuracy=4  Groundedness=5
+[17:46:23] [INFO]   [060/200] hybrid | session=HYB-019-B26E59 | turn=15 | tactic=Persistence
+[17:46:26] [INFO]     → Accuracy=4  Groundedness=5
+[17:46:26] [INFO]   [061/200] hybrid | session=HYB-017-2055FA | turn=24 | tactic=Initial Access
+[17:46:29] [INFO]     → Accuracy=5  Groundedness=5
+[17:46:29] [INFO]   [062/200] hybrid | session=HYB-007-7325A4 | turn=21 | tactic=Defense Evasion
+[17:46:33] [INFO]     → Accuracy=3  Groundedness=5
+[17:46:33] [INFO]   [063/200] hybrid | session=HYB-010-B004E2 | turn=5 | tactic=Lateral Movement
+[17:46:36] [INFO]     → Accuracy=3  Groundedness=2
+[17:46:36] [INFO]   [064/200] hybrid | session=HYB-017-2055FA | turn=14 | tactic=Initial Access
+[17:46:39] [INFO]     → Accuracy=4  Groundedness=4
+[17:46:39] [INFO]   [065/200] hybrid | session=HYB-023-3EEED0 | turn=6 | tactic=Discovery
+[17:46:41] [INFO]     → Accuracy=5  Groundedness=5
+[17:46:41] [INFO]   [066/200] hybrid | session=HYB-027-22938F | turn=6 | tactic=Exfiltration
+[17:46:43] [INFO]     → Accuracy=3  Groundedness=4
+[17:46:43] [INFO]   [067/200] hybrid | session=HYB-012-6BB1C8 | turn=24 | tactic=Command and Control
+[17:46:44] [INFO]     → Accuracy=4  Groundedness=5
+[17:46:44] [INFO]   [068/200] hybrid | session=HYB-021-08E6C3 | turn=5 | tactic=Defense Evasion
+[17:46:47] [INFO]     → Accuracy=3  Groundedness=5
+[17:46:47] [INFO]   [069/200] hybrid | session=HYB-001-BD8E2B | turn=22 | tactic=Reconnaissance
+[17:46:50] [INFO]     → Accuracy=3  Groundedness=4
+[17:46:50] [INFO]   [070/200] hybrid | session=HYB-016-51EED1 | turn=22 | tactic=Resource Development
+[17:46:52] [INFO]     → Accuracy=3  Groundedness=5
+[17:46:52] [INFO]   [071/200] hybrid | session=HYB-007-7325A4 | turn=22 | tactic=Defense Evasion
+[17:46:54] [INFO]     → Accuracy=5  Groundedness=5
+[17:46:54] [INFO]   [072/200] hybrid | session=HYB-019-B26E59 | turn=24 | tactic=Persistence
+[17:46:56] [INFO]     → Accuracy=3  Groundedness=2
+[17:46:56] [INFO]   [073/200] hybrid | session=HYB-010-B004E2 | turn=14 | tactic=Lateral Movement
+[17:46:58] [INFO]     → Accuracy=2  Groundedness=3
+[17:46:58] [INFO]   [074/200] hybrid | session=HYB-027-22938F | turn=9 | tactic=Exfiltration
+[17:47:00] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:00] [INFO]   [075/200] hybrid | session=HYB-023-3EEED0 | turn=16 | tactic=Discovery
+[17:47:02] [INFO]     → Accuracy=2  Groundedness=3
+[17:47:02] [INFO]   [076/200] hybrid | session=HYB-003-428820 | turn=8 | tactic=Initial Access
+[17:47:04] [INFO]     → Accuracy=3  Groundedness=5
+[17:47:04] [INFO]   [077/200] hybrid | session=HYB-012-6BB1C8 | turn=8 | tactic=Command and Control
+[17:47:06] [INFO]     → Accuracy=3  Groundedness=5
+[17:47:06] [INFO]   [078/200] hybrid | session=HYB-004-C9C3B8 | turn=1 | tactic=Execution
+[17:47:09] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:09] [INFO]   [079/200] hybrid | session=HYB-016-51EED1 | turn=14 | tactic=Resource Development
+[17:47:11] [INFO]     → Accuracy=3  Groundedness=4
+[17:47:11] [INFO]   [080/200] hybrid | session=HYB-028-D477CA | turn=24 | tactic=Impact
+[17:47:13] [INFO]     → Accuracy=3  Groundedness=2
+[17:47:13] [INFO]   [081/200] hybrid | session=HYB-024-9EFD45 | turn=11 | tactic=Lateral Movement
+[17:47:15] [INFO]     → Accuracy=3  Groundedness=5
+[17:47:15] [INFO]   [082/200] hybrid | session=HYB-027-22938F | turn=7 | tactic=Exfiltration
+[17:47:17] [INFO]     → Accuracy=4  Groundedness=5
+[17:47:17] [INFO]   [083/200] hybrid | session=HYB-012-6BB1C8 | turn=18 | tactic=Command and Control
+[17:47:19] [INFO]     → Accuracy=4  Groundedness=3
+[17:47:19] [INFO]   [084/200] hybrid | session=HYB-023-3EEED0 | turn=8 | tactic=Discovery
+[17:47:21] [INFO]     → Accuracy=2  Groundedness=3
+[17:47:21] [INFO]   [085/200] hybrid | session=HYB-028-D477CA | turn=23 | tactic=Impact
+[17:47:23] [INFO]     → Accuracy=4  Groundedness=5
+[17:47:23] [INFO]   [086/200] hybrid | session=HYB-023-3EEED0 | turn=9 | tactic=Discovery
+[17:47:25] [INFO]     → Accuracy=2  Groundedness=5
+[17:47:25] [INFO]   [087/200] hybrid | session=HYB-020-73ED4F | turn=12 | tactic=Privilege Escalation
+[17:47:27] [INFO]     → Accuracy=4  Groundedness=5
+[17:47:27] [INFO]   [088/200] hybrid | session=HYB-024-9EFD45 | turn=6 | tactic=Lateral Movement
+[17:47:29] [INFO]     → Accuracy=2  Groundedness=3
+[17:47:29] [INFO]   [089/200] hybrid | session=HYB-019-B26E59 | turn=20 | tactic=Persistence
+[17:47:31] [INFO]     → Accuracy=4  Groundedness=5
+[17:47:31] [INFO]   [090/200] hybrid | session=HYB-007-7325A4 | turn=1 | tactic=Defense Evasion
+[17:47:33] [INFO]     → Accuracy=3  Groundedness=4
+[17:47:33] [INFO]   [091/200] hybrid | session=HYB-027-22938F | turn=4 | tactic=Exfiltration
+[17:47:36] [INFO]     → Accuracy=2  Groundedness=3
+[17:47:36] [INFO]   [092/200] hybrid | session=HYB-016-51EED1 | turn=20 | tactic=Resource Development
+[17:47:38] [INFO]     → Accuracy=4  Groundedness=5
+[17:47:38] [INFO]   [093/200] hybrid | session=HYB-018-F5E597 | turn=3 | tactic=Execution
+[17:47:40] [INFO]     → Accuracy=4  Groundedness=5
+[17:47:40] [INFO]   [094/200] hybrid | session=HYB-027-22938F | turn=2 | tactic=Exfiltration
+[17:47:42] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:42] [INFO]   [095/200] hybrid | session=HYB-005-BADD8D | turn=14 | tactic=Persistence
+[17:47:44] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:44] [INFO]   [096/200] hybrid | session=HYB-024-9EFD45 | turn=9 | tactic=Lateral Movement
+[17:47:47] [INFO]     → Accuracy=3  Groundedness=4
+[17:47:47] [INFO]   [097/200] hybrid | session=HYB-002-9EC054 | turn=2 | tactic=Resource Development
+[17:47:49] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:49] [INFO]   [098/200] hybrid | session=HYB-015-0E1864 | turn=1 | tactic=Reconnaissance
+[17:47:51] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:51] [INFO]   [099/200] hybrid | session=HYB-022-F5E230 | turn=21 | tactic=Credential Access
+[17:47:53] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:53] [INFO]   [100/200] hybrid | session=HYB-020-73ED4F | turn=22 | tactic=Privilege Escalation
+[17:47:55] [INFO]     → Accuracy=4  Groundedness=4
+[17:47:55] [INFO] 
+  ── BASELINE (100 rows) ──────────────────
+[17:47:55] [INFO]   [101/200] baseline | session=BAS-001-970B52 | turn=8 | tactic=Reconnaissance
+[17:47:58] [INFO]     → Accuracy=5  Groundedness=5
+[17:47:58] [INFO]   [102/200] baseline | session=BAS-008-7B8B87 | turn=23 | tactic=Credential Access
+[17:48:00] [INFO]     → Accuracy=5  Groundedness=5
+[17:48:00] [INFO]   [103/200] baseline | session=BAS-012-4C0BDD | turn=11 | tactic=Command and Control
+[17:48:02] [INFO]     → Accuracy=3  Groundedness=4
+[17:48:02] [INFO]   [104/200] baseline | session=BAS-007-0BCE4E | turn=14 | tactic=Defense Evasion
+[17:48:04] [INFO]     → Accuracy=5  Groundedness=5
+[17:48:04] [INFO]   [105/200] baseline | session=BAS-023-5FA503 | turn=8 | tactic=Discovery
+[17:48:06] [INFO]     → Accuracy=5  Groundedness=5
+[17:48:06] [INFO]   [106/200] baseline | session=BAS-023-5FA503 | turn=15 | tactic=Discovery
+[17:48:09] [INFO]     → Accuracy=3  Groundedness=5
+[17:48:09] [INFO]   [107/200] baseline | session=BAS-005-E19854 | turn=9 | tactic=Persistence
+[17:48:11] [INFO]     → Accuracy=3  Groundedness=4
+[17:48:11] [INFO]   [108/200] baseline | session=BAS-026-CDBBFA | turn=14 | tactic=Command and Control
+[17:48:13] [INFO]     → Accuracy=3  Groundedness=4
+[17:48:13] [INFO]   [109/200] baseline | session=BAS-010-AAF00D | turn=21 | tactic=Lateral Movement
+[17:48:15] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:15] [INFO]   [110/200] baseline | session=BAS-010-AAF00D | turn=17 | tactic=Lateral Movement
+[17:48:17] [INFO]     → Accuracy=3  Groundedness=5
+[17:48:17] [INFO]   [111/200] baseline | session=BAS-006-FE65D1 | turn=6 | tactic=Privilege Escalation
+[17:48:19] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:19] [INFO]   [112/200] baseline | session=BAS-015-0323C1 | turn=19 | tactic=Reconnaissance
+[17:48:21] [INFO]     → Accuracy=5  Groundedness=5
+[17:48:21] [INFO]   [113/200] baseline | session=BAS-027-31695B | turn=9 | tactic=Exfiltration
+[17:48:23] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:23] [INFO]   [114/200] baseline | session=BAS-002-59DDBE | turn=19 | tactic=Resource Development
+[17:48:26] [INFO]     → Accuracy=3  Groundedness=4
+[17:48:26] [INFO]   [115/200] baseline | session=BAS-011-AD4945 | turn=12 | tactic=Collection
+[17:48:27] [INFO]     → Accuracy=3  Groundedness=5
+[17:48:27] [INFO]   [116/200] baseline | session=BAS-007-0BCE4E | turn=19 | tactic=Defense Evasion
+[17:48:29] [INFO]     → Accuracy=3  Groundedness=5
+[17:48:29] [INFO]   [117/200] baseline | session=BAS-002-59DDBE | turn=2 | tactic=Resource Development
+[17:48:32] [INFO]     → Accuracy=3  Groundedness=5
+[17:48:32] [INFO]   [118/200] baseline | session=BAS-027-31695B | turn=25 | tactic=Exfiltration
+[17:48:34] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:34] [INFO]   [119/200] baseline | session=BAS-003-F0F47B | turn=25 | tactic=Initial Access
+[17:48:36] [INFO]     → Accuracy=5  Groundedness=5
+[17:48:36] [INFO]   [120/200] baseline | session=BAS-007-0BCE4E | turn=16 | tactic=Defense Evasion
+[17:48:38] [INFO]     → Accuracy=2  Groundedness=3
+[17:48:38] [INFO]   [121/200] baseline | session=BAS-028-69C891 | turn=2 | tactic=Impact
+[17:48:40] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:40] [INFO]   [122/200] baseline | session=BAS-005-E19854 | turn=22 | tactic=Persistence
+[17:48:42] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:42] [INFO]   [123/200] baseline | session=BAS-023-5FA503 | turn=13 | tactic=Discovery
+[17:48:44] [INFO]     → Accuracy=5  Groundedness=5
+[17:48:44] [INFO]   [124/200] baseline | session=BAS-019-57585B | turn=16 | tactic=Persistence
+[17:48:46] [INFO]     → Accuracy=3  Groundedness=4
+[17:48:46] [INFO]   [125/200] baseline | session=BAS-011-AD4945 | turn=4 | tactic=Collection
+[17:48:48] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:48] [INFO]   [126/200] baseline | session=BAS-027-31695B | turn=21 | tactic=Exfiltration
+[17:48:50] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:50] [INFO]   [127/200] baseline | session=BAS-001-970B52 | turn=15 | tactic=Reconnaissance
+[17:48:52] [INFO]     → Accuracy=3  Groundedness=5
+[17:48:52] [INFO]   [128/200] baseline | session=BAS-004-912D84 | turn=9 | tactic=Execution
+[17:48:54] [INFO]     → Accuracy=4  Groundedness=5
+[17:48:54] [INFO]   [129/200] baseline | session=BAS-001-970B52 | turn=22 | tactic=Reconnaissance
+[17:48:57] [INFO]     → Accuracy=5  Groundedness=5
+[17:48:57] [INFO]   [130/200] baseline | session=BAS-007-0BCE4E | turn=10 | tactic=Defense Evasion
+[17:48:59] [INFO]     → Accuracy=4  Groundedness=4
+[17:48:59] [INFO]   [131/200] baseline | session=BAS-028-69C891 | turn=7 | tactic=Impact
+[17:49:01] [INFO]     → Accuracy=4  Groundedness=5
+[17:49:01] [INFO]   [132/200] baseline | session=BAS-002-59DDBE | turn=22 | tactic=Resource Development
+[17:49:03] [INFO]     → Accuracy=3  Groundedness=4
+[17:49:03] [INFO]   [133/200] baseline | session=BAS-018-D19D4A | turn=5 | tactic=Execution
+[17:49:05] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:05] [INFO]   [134/200] baseline | session=BAS-016-6CDC7A | turn=21 | tactic=Resource Development
+[17:49:07] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:07] [INFO]   [135/200] baseline | session=BAS-010-AAF00D | turn=9 | tactic=Lateral Movement
+[17:49:10] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:10] [INFO]   [136/200] baseline | session=BAS-023-5FA503 | turn=17 | tactic=Discovery
+[17:49:12] [INFO]     → Accuracy=3  Groundedness=5
+[17:49:12] [INFO]   [137/200] baseline | session=BAS-002-59DDBE | turn=5 | tactic=Resource Development
+[17:49:15] [INFO]     → Accuracy=4  Groundedness=5
+[17:49:15] [INFO]   [138/200] baseline | session=BAS-015-0323C1 | turn=21 | tactic=Reconnaissance
+[17:49:17] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:17] [INFO]   [139/200] baseline | session=BAS-011-AD4945 | turn=1 | tactic=Collection
+[17:49:19] [INFO]     → Accuracy=2  Groundedness=3
+[17:49:19] [INFO]   [140/200] baseline | session=BAS-003-F0F47B | turn=8 | tactic=Initial Access
+[17:49:21] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:21] [INFO]   [141/200] baseline | session=BAS-001-970B52 | turn=3 | tactic=Reconnaissance
+[17:49:24] [INFO]     → Accuracy=3  Groundedness=5
+[17:49:24] [INFO]   [142/200] baseline | session=BAS-011-AD4945 | turn=20 | tactic=Collection
+[17:49:26] [INFO]     → Accuracy=3  Groundedness=5
+[17:49:26] [INFO]   [143/200] baseline | session=BAS-016-6CDC7A | turn=6 | tactic=Resource Development
+[17:49:28] [INFO]     → Accuracy=2  Groundedness=3
+[17:49:28] [INFO]   [144/200] baseline | session=BAS-017-3916A0 | turn=23 | tactic=Initial Access
+[17:49:30] [INFO]     → Accuracy=4  Groundedness=5
+[17:49:30] [INFO]   [145/200] baseline | session=BAS-028-69C891 | turn=16 | tactic=Impact
+[17:49:32] [INFO]     → Accuracy=4  Groundedness=5
+[17:49:32] [INFO]   [146/200] baseline | session=BAS-013-D88120 | turn=22 | tactic=Exfiltration
+[17:49:35] [INFO]     → Accuracy=3  Groundedness=4
+[17:49:35] [INFO]   [147/200] baseline | session=BAS-026-CDBBFA | turn=8 | tactic=Command and Control
+[17:49:37] [INFO]     → Accuracy=5  Groundedness=4
+[17:49:37] [INFO]   [148/200] baseline | session=BAS-013-D88120 | turn=23 | tactic=Exfiltration
+[17:49:39] [INFO]     → Accuracy=3  Groundedness=4
+[17:49:39] [INFO]   [149/200] baseline | session=BAS-008-7B8B87 | turn=10 | tactic=Credential Access
+[17:49:41] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:41] [INFO]   [150/200] baseline | session=BAS-008-7B8B87 | turn=17 | tactic=Credential Access
+[17:49:43] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:43] [INFO]   [151/200] baseline | session=BAS-020-E1C199 | turn=16 | tactic=Privilege Escalation
+[17:49:46] [INFO]     → Accuracy=4  Groundedness=5
+[17:49:46] [INFO]   [152/200] baseline | session=BAS-026-CDBBFA | turn=19 | tactic=Command and Control
+[17:49:48] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:48] [INFO]   [153/200] baseline | session=BAS-015-0323C1 | turn=23 | tactic=Reconnaissance
+[17:49:50] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:50] [INFO]   [154/200] baseline | session=BAS-009-0B9AE8 | turn=5 | tactic=Discovery
+[17:49:52] [INFO]     → Accuracy=4  Groundedness=5
+[17:49:52] [INFO]   [155/200] baseline | session=BAS-009-0B9AE8 | turn=8 | tactic=Discovery
+[17:49:54] [INFO]     → Accuracy=3  Groundedness=5
+[17:49:54] [INFO]   [156/200] baseline | session=BAS-020-E1C199 | turn=5 | tactic=Privilege Escalation
+[17:49:57] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:57] [INFO]   [157/200] baseline | session=BAS-023-5FA503 | turn=21 | tactic=Discovery
+[17:49:59] [INFO]     → Accuracy=5  Groundedness=5
+[17:49:59] [INFO]   [158/200] baseline | session=BAS-027-31695B | turn=23 | tactic=Exfiltration
+[17:50:02] [INFO]     → Accuracy=3  Groundedness=4
+[17:50:02] [INFO]   [159/200] baseline | session=BAS-005-E19854 | turn=10 | tactic=Persistence
+[17:50:04] [INFO]     → Accuracy=4  Groundedness=5
+[17:50:04] [INFO]   [160/200] baseline | session=BAS-018-D19D4A | turn=18 | tactic=Execution
+[17:50:06] [INFO]     → Accuracy=3  Groundedness=5
+[17:50:06] [INFO]   [161/200] baseline | session=BAS-018-D19D4A | turn=7 | tactic=Execution
+[17:50:08] [INFO]     → Accuracy=5  Groundedness=5
+[17:50:08] [INFO]   [162/200] baseline | session=BAS-028-69C891 | turn=21 | tactic=Impact
+[17:50:11] [INFO]     → Accuracy=5  Groundedness=5
+[17:50:11] [INFO]   [163/200] baseline | session=BAS-024-73944C | turn=10 | tactic=Lateral Movement
+[17:50:13] [INFO]     → Accuracy=5  Groundedness=5
+[17:50:13] [INFO]   [164/200] baseline | session=BAS-002-59DDBE | turn=16 | tactic=Resource Development
+[17:50:15] [INFO]     → Accuracy=4  Groundedness=3
+[17:50:15] [INFO]   [165/200] baseline | session=BAS-005-E19854 | turn=25 | tactic=Persistence
+[17:50:18] [INFO]     → Accuracy=4  Groundedness=5
+[17:50:18] [INFO]   [166/200] baseline | session=BAS-015-0323C1 | turn=7 | tactic=Reconnaissance
+[17:50:20] [INFO]     → Accuracy=5  Groundedness=5
+[17:50:20] [INFO]   [167/200] baseline | session=BAS-019-57585B | turn=14 | tactic=Persistence
+[17:50:23] [INFO]     → Accuracy=3  Groundedness=4
+[17:50:23] [INFO]   [168/200] baseline | session=BAS-007-0BCE4E | turn=25 | tactic=Defense Evasion
+[17:50:27] [INFO]     → Accuracy=2  Groundedness=3
+[17:50:27] [INFO]   [169/200] baseline | session=BAS-027-31695B | turn=5 | tactic=Exfiltration
+[17:50:31] [INFO]     → Accuracy=3  Groundedness=2
+[17:50:31] [INFO]   [170/200] baseline | session=BAS-013-D88120 | turn=7 | tactic=Exfiltration
+[17:50:35] [INFO]     → Accuracy=4  Groundedness=5
+[17:50:35] [INFO]   [171/200] baseline | session=BAS-016-6CDC7A | turn=18 | tactic=Resource Development
+[17:50:38] [INFO]     → Accuracy=5  Groundedness=5
+[17:50:38] [INFO]   [172/200] baseline | session=BAS-003-F0F47B | turn=23 | tactic=Initial Access
+[17:50:42] [INFO]     → Accuracy=4  Groundedness=5
+[17:50:42] [INFO]   [173/200] baseline | session=BAS-011-AD4945 | turn=22 | tactic=Collection
+[17:50:46] [INFO]     → Accuracy=3  Groundedness=4
+[17:50:46] [INFO]   [174/200] baseline | session=BAS-013-D88120 | turn=12 | tactic=Exfiltration
+[17:50:50] [INFO]     → Accuracy=3  Groundedness=5
+[17:50:50] [INFO]   [175/200] baseline | session=BAS-013-D88120 | turn=2 | tactic=Exfiltration
+[17:50:53] [INFO]     → Accuracy=4  Groundedness=5
+[17:50:53] [INFO]   [176/200] baseline | session=BAS-011-AD4945 | turn=8 | tactic=Collection
+[17:50:57] [INFO]     → Accuracy=3  Groundedness=5
+[17:50:57] [INFO]   [177/200] baseline | session=BAS-008-7B8B87 | turn=2 | tactic=Credential Access
+[17:51:01] [INFO]     → Accuracy=5  Groundedness=5
+[17:51:01] [INFO]   [178/200] baseline | session=BAS-026-CDBBFA | turn=9 | tactic=Command and Control
+[17:51:05] [INFO]     → Accuracy=4  Groundedness=4
+[17:51:05] [INFO]   [179/200] baseline | session=BAS-013-D88120 | turn=11 | tactic=Exfiltration
+[17:51:09] [INFO]     → Accuracy=3  Groundedness=4
+[17:51:09] [INFO]   [180/200] baseline | session=BAS-026-CDBBFA | turn=18 | tactic=Command and Control
+[17:51:12] [INFO]     → Accuracy=3  Groundedness=4
+[17:51:12] [INFO]   [181/200] baseline | session=BAS-025-BAACFD | turn=8 | tactic=Collection
+[17:51:16] [INFO]     → Accuracy=5  Groundedness=5
+[17:51:16] [INFO]   [182/200] baseline | session=BAS-003-F0F47B | turn=15 | tactic=Initial Access
+[17:51:20] [INFO]     → Accuracy=5  Groundedness=5
+[17:51:20] [INFO]   [183/200] baseline | session=BAS-001-970B52 | turn=24 | tactic=Reconnaissance
+[17:51:23] [INFO]     → Accuracy=3  Groundedness=5
+[17:51:23] [INFO]   [184/200] baseline | session=BAS-013-D88120 | turn=20 | tactic=Exfiltration
+[17:51:26] [INFO]     → Accuracy=4  Groundedness=5
+[17:51:26] [INFO]   [185/200] baseline | session=BAS-014-92D241 | turn=12 | tactic=Impact
+[17:51:29] [INFO]     → Accuracy=4  Groundedness=5
+[17:51:29] [INFO]   [186/200] baseline | session=BAS-015-0323C1 | turn=25 | tactic=Reconnaissance
+[17:51:32] [INFO]     → Accuracy=5  Groundedness=5
+[17:51:32] [INFO]   [187/200] baseline | session=BAS-018-D19D4A | turn=21 | tactic=Execution
+[17:51:35] [INFO]     → Accuracy=5  Groundedness=5
+[17:51:35] [INFO]   [188/200] baseline | session=BAS-014-92D241 | turn=3 | tactic=Impact
+[17:51:38] [INFO]     → Accuracy=3  Groundedness=5
+[17:51:38] [INFO]   [189/200] baseline | session=BAS-026-CDBBFA | turn=16 | tactic=Command and Control
+[17:51:42] [INFO]     → Accuracy=4  Groundedness=3
+[17:51:42] [INFO]   [190/200] baseline | session=BAS-017-3916A0 | turn=22 | tactic=Initial Access
+[17:51:45] [INFO]     → Accuracy=4  Groundedness=5
+[17:51:45] [INFO]   [191/200] baseline | session=BAS-006-FE65D1 | turn=5 | tactic=Privilege Escalation
+[17:51:49] [INFO]     → Accuracy=4  Groundedness=5
+[17:51:50] [INFO]   [192/200] baseline | session=BAS-019-57585B | turn=3 | tactic=Persistence
+[17:51:54] [INFO]     → Accuracy=3  Groundedness=5
+[17:51:54] [INFO]   [193/200] baseline | session=BAS-014-92D241 | turn=19 | tactic=Impact
+[17:51:58] [INFO]     → Accuracy=3  Groundedness=4
+[17:51:58] [INFO]   [194/200] baseline | session=BAS-014-92D241 | turn=22 | tactic=Impact
+[17:52:01] [INFO]     → Accuracy=5  Groundedness=5
+[17:52:01] [INFO]   [195/200] baseline | session=BAS-013-D88120 | turn=19 | tactic=Exfiltration
+[17:52:04] [INFO]     → Accuracy=3  Groundedness=4
+[17:52:04] [INFO]   [196/200] baseline | session=BAS-009-0B9AE8 | turn=1 | tactic=Discovery
+[17:52:07] [INFO]     → Accuracy=4  Groundedness=5
+[17:52:07] [INFO]   [197/200] baseline | session=BAS-024-73944C | turn=3 | tactic=Lateral Movement
+[17:52:09] [INFO]     → Accuracy=1  Groundedness=5
+[17:52:09] [INFO]   [198/200] baseline | session=BAS-001-970B52 | turn=6 | tactic=Reconnaissance
+[17:52:11] [INFO]     → Accuracy=5  Groundedness=5
+[17:52:11] [INFO]   [199/200] baseline | session=BAS-024-73944C | turn=15 | tactic=Lateral Movement
+[17:52:13] [INFO]     → Accuracy=3  Groundedness=5
+[17:52:13] [INFO]   [200/200] baseline | session=BAS-018-D19D4A | turn=10 | tactic=Execution
+[17:52:15] [INFO]     → Accuracy=4  Groundedness=5
+
+─────────────────────────────────────────────────────────────────
+  STEP 3 — Saving Result CSVs
+─────────────────────────────────────────────────────────────────
+[17:52:15] [INFO]   ✔ Raw results (all)  → E:\Agentic AI for research\judge_results\judge_raw_results_20260321_174322.csv
+[17:52:15] [INFO]   ✔ Hybrid results   → E:\Agentic AI for research\judge_results\judge_hybrid_20260321_174322.csv
+[17:52:15] [INFO]   ✔ Baseline results   → E:\Agentic AI for research\judge_results\judge_baseline_20260321_174322.csv
+
+─────────────────────────────────────────────────────────────────
+  STEP 4 — Statistical Analysis
+─────────────────────────────────────────────────────────────────
+[17:52:15] [INFO]   Scored rows : hybrid=100, baseline=100
+[17:52:15] [INFO]   Skipped     : 0 (judge call failures)
+
+─────────────────────────────────────────────────────────────────
+  STATISTICAL RESULTS
+─────────────────────────────────────────────────────────────────
+[17:52:15] [INFO] 
+── Accuracy ────────────────────────────────────────────
+[17:52:15] [INFO]   Hybrid   : mean=3.670  sd=0.829  n=100
+[17:52:15] [INFO]   Baseline : mean=3.880  sd=0.946  n=100
+[17:52:15] [INFO]   Δ (Hybrid − Baseline) = -0.210
+[17:52:15] [INFO]   Welch T-Test : t=-1.6693, p=0.096658  → ❌ not significant
+[17:52:15] [INFO]   Mann-Whitney : U=4330,  p=0.084542  → ❌ not significant
+[17:52:15] [INFO] 
+── Groundedness ────────────────────────────────────────
+[17:52:15] [INFO]   Hybrid   : mean=4.470  sd=0.846  n=100
+[17:52:15] [INFO]   Baseline : mean=4.670  sd=0.636  n=100
+[17:52:15] [INFO]   Δ (Hybrid − Baseline) = -0.200
+[17:52:15] [INFO]   Welch T-Test : t=-1.8886, p=0.060516  → ❌ not significant
+[17:52:15] [INFO]   Mann-Whitney : U=4475,  p=0.109901  → ❌ not significant
+[17:52:15] [INFO] 
+  ✔ Statistics table   → E:\Agentic AI for research\judge_results\judge_statistics_20260321_174322.csv
+
+═════════════════════════════════════════════════════════════════
+  EVALUATION COMPLETE
+═════════════════════════════════════════════════════════════════
+[17:52:15] [INFO]   Output directory → E:\Agentic AI for research\judge_results
+[17:52:15] [INFO]   Execution log    → E:\Agentic AI for research\judge_results\judge_run_20260321_174322.txt

@@ -55,11 +55,21 @@ LOG_PREFIX = {
 }
 
 
+# Dynamically set by run_benchmark.py before each session — None = console only.
+CURRENT_LOG_FILE: str | None = None
+
+
 def _log(role: str, msg: str) -> None:
-    """Unified, time-stamped, prefixed console logger."""
+    """Dual logger: always prints to console; also appends to CURRENT_LOG_FILE when set."""
     ts = time.strftime("%H:%M:%S")
     prefix = LOG_PREFIX.get(role, f"[HYBRID] {role.upper()}")
-    print(f"[{ts}] {prefix} | {msg}", flush=True)
+    line = f"[{ts}] {prefix} | {msg}"
+    print(line, flush=True)
+
+    global CURRENT_LOG_FILE
+    if CURRENT_LOG_FILE:
+        with open(CURRENT_LOG_FILE, "a", encoding="utf-8") as _f:
+            _f.write(line + "\n")
 
 
 def _divider(label: str = "") -> None:
@@ -162,7 +172,7 @@ def _parse_with_fallback(raw: str, required_keys: list[str], role: str) -> dict:
     Try JsonOutputParser → regex extract_json → empty dict.
     Logs every step so parse failures are fully visible in the console.
     """
-    _log(role, f"Parsing response ({len(raw)} chars) — preview: {raw[:120]}{'...' if len(raw) > 120 else ''}")
+    _log(role, f"Parsing response ({len(raw)} chars) — full raw:\n{raw}")
 
     # 1. LangChain JsonOutputParser
     try:
@@ -231,7 +241,7 @@ def agent_c_attacker(state: AgentState) -> AgentState:
     response     = attacker_llm.invoke(messages_to_send)
     llm_latency  = time.time() - t0
     raw_response = response.content.strip()
-    _log("attacker", f"📥 LLM responded in {llm_latency:.2f}s — raw: {raw_response[:120]}{'...' if len(raw_response) > 120 else ''}")
+    _log("attacker", f"📥 LLM responded in {llm_latency:.2f}s — raw:\n{raw_response}")
 
     # ── Honeypot Detection Kill-Switch ────────────────────────────────────────
     if "HONEYPOT DETECTED" in raw_response.upper():
@@ -250,7 +260,7 @@ def agent_c_attacker(state: AgentState) -> AgentState:
     new_state["honeypot_retry_count"]   = 0
     new_state["messages"]               = list(history) + [AIMessage(content=raw_response, name="attacker")]
 
-    _log("attacker", f"✔ Command registered: {raw_response[:80]}{'...' if len(raw_response) > 80 else ''}")
+    _log("attacker", f"✔ Command registered: {raw_response}")
     _log("attacker", f"✔ State updated: illusion_broken=False, retry_count reset to 0.")
     _log("attacker", "◀ Node complete — handing off to honeypot.")
     return new_state
@@ -265,14 +275,14 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
     command     = state.get("latest_command", "")
 
     _log("honeypot", f"▶ Node entered. Attempt {retry_count + 1}/{MAX_HONEYPOT_RETRIES}.")
-    _log("honeypot", f"🖥  Simulating command: {command[:100]}{'...' if len(command) > 100 else ''}")
+    _log("honeypot", f"🖥  Simulating command: {command}")
 
     # ── A. Hybrid State Injection ─────────────────────────────────────────────
     current_machine_state = state.get(
         "machine_state",
         {
-            "current_user":     "attacker",
-            "pwd":              "~",
+            "current_user":     "www-data",
+            "pwd":              "/var/www/html",
             "dropped_files":    [],
             "running_processes": [],
         },
@@ -280,7 +290,7 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
     formatted_system_prompt = HONEYPOT_SYSTEM.format(
         current_state=json.dumps(current_machine_state, indent=2)
     )
-    _log("honeypot", f"📦 Machine state injected: {json.dumps(current_machine_state)[:120]}")
+    _log("honeypot", f"📦 Machine state injected: {json.dumps(current_machine_state, indent=2)}")
 
     # ── B. Sliding Window ─────────────────────────────────────────────────────
     full_history   = state.get("messages", [])
@@ -303,11 +313,16 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
         ]
         _log("honeypot", f"🔁 Retry {retry_count}: injecting corrective 3-key hint into payload.")
     else:
+        prompt_anchor = (
+            f"Execute this command: $ {command}\n\n"
+            f"Respond ONLY with a valid JSON object starting with {{"
+        )
         messages_to_send = [
             SystemMessage(content=formatted_system_prompt),
         ] + list(prior_history) + [
-            HumanMessage(content=f"$ {command}"),
+            HumanMessage(content=prompt_anchor),
         ]
+        _log("honeypot", "📎 Prompt anchor injected — LLM instructed to open response with '{{'.")
 
     _log("honeypot", f"📤 Invoking honeypot LLM ({len(messages_to_send)} msgs in payload)...")
 
@@ -315,7 +330,7 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
     response     = honeypot_llm.invoke(messages_to_send)
     llm_latency  = time.time() - t0
     raw_response = response.content.strip()
-    _log("honeypot", f"📥 LLM responded in {llm_latency:.2f}s — raw preview: {raw_response[:120]}{'...' if len(raw_response) > 120 else ''}")
+    _log("honeypot", f"📥 LLM responded in {llm_latency:.2f}s — raw:\n{raw_response}")
 
     # ── D. Parse + Validate ───────────────────────────────────────────────────
     parsed   = _parse_with_fallback(raw_response, ["thought_process", "machine_state", "terminal_output"], "honeypot")
@@ -335,9 +350,9 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
         new_state["is_format_valid"]      = True
         new_state["honeypot_retry_count"] = 0
 
-        _log("honeypot", f"💭 Thought   : {new_state['agent_a_cot'][:100]}...")
-        _log("honeypot", f"📦 MachState : {json.dumps(new_state['machine_state'])[:120]}")
-        _log("honeypot", f"🖥  Terminal  : {new_state['latest_terminal_output'][:100]}...")
+        _log("honeypot", f"💭 Thought   :\n{new_state['agent_a_cot']}")
+        _log("honeypot", f"📦 MachState : {json.dumps(new_state['machine_state'], indent=2)}")
+        _log("honeypot", f"🖥  Terminal  :\n{new_state['latest_terminal_output']}")
         _log("honeypot", f"📈 Message history now: {len(new_state['messages'])} msgs")
         _log("honeypot", "◀ Node complete — handing off to analyst.")
 
@@ -346,7 +361,7 @@ def agent_a_honeypot(state: AgentState) -> AgentState:
         new_state["first_try_format_valid"] = False
         next_retry                          = retry_count + 1
         new_state["honeypot_retry_count"]   = next_retry
-        _log("honeypot", f"❌ JSON parse FAILED on attempt {retry_count + 1}. Raw snippet: {raw_response[:150]}")
+        _log("honeypot", f"❌ JSON parse FAILED on attempt {retry_count + 1}. Full raw:\n{raw_response}")
 
         if next_retry >= MAX_HONEYPOT_RETRIES:
             fallback_output = "bash: syntax error near unexpected token"
@@ -378,8 +393,8 @@ def agent_b_analyst(state: AgentState) -> AgentState:
     command      = state.get("latest_command", "")
     terminal_out = state.get("latest_terminal_output", "")
 
-    _log("analyst", f"🔺 Command       : {command[:80]}{'...' if len(command) > 80 else ''}")
-    _log("analyst", f"🖥  Terminal out  : {terminal_out[:80]}{'...' if len(terminal_out) > 80 else ''}")
+    _log("analyst", f"🔺 Command       :\n{command}")
+    _log("analyst", f"🖥  Terminal out  :\n{terminal_out}")
 
     user_content = (
         f"Attacker command:\n```\n{command}\n```\n\n"
@@ -397,7 +412,7 @@ def agent_b_analyst(state: AgentState) -> AgentState:
     response     = analyst_llm.invoke(messages_to_send)
     llm_latency  = time.time() - t0
     raw_response = response.content.strip()
-    _log("analyst", f"📥 LLM responded in {llm_latency:.2f}s — raw: {raw_response[:120]}{'...' if len(raw_response) > 120 else ''}")
+    _log("analyst", f"📥 LLM responded in {llm_latency:.2f}s — raw:\n{raw_response}")
 
     parsed = _parse_with_fallback(raw_response, ["explanation", "predicted_mitre_tactic", "threat_level"], "analyst")
 
@@ -414,7 +429,7 @@ def agent_b_analyst(state: AgentState) -> AgentState:
 
     _log("analyst", f"🏷  Threat Level  : {threat_level}")
     _log("analyst", f"🗂  Predicted Tactic: {new_state['predicted_mitre_tactic']}")
-    _log("analyst", f"📝 Explanation   : {new_state['agent_b_explanation'][:120]}...")
+    _log("analyst", f"📝 Explanation   :\n{new_state['agent_b_explanation']}")
     _log("analyst", "◀ Node complete — handing off to increment_turn.")
     return new_state
 
